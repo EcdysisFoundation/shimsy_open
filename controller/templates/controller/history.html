@@ -1,0 +1,182 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Scan History - Shimsy Controller</title>
+    <link rel="icon" type="image/png" href="{% static 'images/2.png'}" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static "css/history.css" %}">
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <img src="{% static 'images/1.png' %}" alt="Logo" />
+        <h1>Scan History</h1>
+        <a href="/" class="nav-link"><i class="fas fa-home"></i> Back to Home</a>
+      </div>
+
+      <div class="content-section">
+        <h2 class="section-title">Scan History Records</h2>
+        <div class="daily-stats-section">
+          <div class="stats-grid">
+            <div class="stat-card today-stat">
+              <div class="stat-icon"><i class="fas fa-chart-bar"></i></div>
+              <div class="stat-content">
+                <div class="stat-label">Runs Today</div>
+                <div class="stat-value">{{ daily_stats.today }}</div>
+                {% if daily_stats.today > 0 %}
+                  <div class="stat-message">Keep it up! <i class="fas fa-fire"></i></div>
+                {% else %}
+                  <div class="stat-message">Ready to scan! <i class="fas fa-rocket"></i></div>
+                {% endif %}
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon"><i class="fas fa-calendar-day"></i></div>
+              <div class="stat-content">
+                <div class="stat-label">Yesterday</div>
+                <div class="stat-value">{{ daily_stats.yesterday }}</div>
+                <div class="stat-message">{{ yesterday|date:"M d" }}</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon"><i class="fas fa-chart-line"></i></div>
+              <div class="stat-content">
+                <div class="stat-label">This Week</div>
+                <div class="stat-value">{{ daily_stats.this_week }}</div>
+                <div class="stat-message">Last 7 days</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon"><i class="fas fa-trophy"></i></div>
+              <div class="stat-content">
+                <div class="stat-label">Total Runs</div>
+                <div class="stat-value">{{ daily_stats.total_runs }}</div>
+                <div class="stat-message">All time</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="search-section">
+          <form method="get" class="search-form">
+            <div class="search-container">
+              <input
+                type="text"
+                name="search"
+                placeholder="Search by site number or run number..."
+                value="{{ search_query }}"
+                class="search-input"
+              >
+              <button type="submit" class="search-btn"><i class="fas fa-search"></i> Search</button>
+              {% if search_query %}
+                <a href="{% url 'scan-history' %}" class="clear-search-btn"><i class="fas fa-times"></i> Clear</a>
+              {% endif %}
+            </div>
+          </form>
+        </div>
+        <div class="results-info">
+          {% if search_query %}
+            <p class="search-results-text">
+              {% if page_obj %}
+                Showing {{ page_obj.start_index }}-{{ page_obj.end_index }} of {{ paginator.count }} results for "{{ search_query }}"
+              {% else %}
+                No results found for "{{ search_query }}"
+              {% endif %}
+            </p>
+          {% else %}
+            <p class="total-records-text">
+              Total records: {{ paginator.count }}
+            </p>
+          {% endif %}
+        </div>
+        <div class="export-section">
+          <form method="post" action="{% url 'export_csv' %}">
+            {% csrf_token %}
+            <button type="submit" class="export-btn"><i class="fas fa-file-csv"></i> Export CSV</button>
+          </form>
+        </div>
+
+        <div class="table-container">
+          <table>
+      <thead>
+        <tr>
+          <th>Timestamp</th>
+          <th>Name</th>
+          <th>Name 2</th>
+          <th>Site</th>
+          <th>Type</th>
+          <th>Transect</th>
+          <th>Run #</th>
+          <th>Retake</th>
+          <th>Splitted</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in records %}
+        <tr>
+          <td data-label="Timestamp"><span class="utc-time" data-utc="{{ r.timestamp|date:'c' }}">{{ r.timestamp|date:"Y-m-d H:i:s" }}</span></td>
+          <td data-label="Name">{{ r.name }}</td>
+          <td data-label="Name 2">{{ r.name2|default:"-" }}</td>
+          <td data-label="Site">{{ r.site_number }}</td>
+          <td data-label="Type">{{ r.sample_type }}</td>
+          <td data-label="Transect">{{ r.transect }}</td>
+          <td data-label="Run">{{ r.run_number }}</td>
+          <td data-label="Retake">
+            <span class="retake-badge {{ r.retake|yesno:'retake-yes,retake-no' }}">
+              {{ r.retake|yesno:"Yes,No" }}
+            </span>
+          </td>
+          <td data-label="Splitted">
+            <span class="retake-badge {% if r.is_splitted %}retake-yes{% else %}retake-no{% endif %}">
+              {% if r.is_splitted %}Yes{% else %}No{% endif %}
+            </span>
+          </td>
+        </tr>
+        {% endfor %}
+          </tbody>
+          </table>
+        </div>
+        {% if paginator.num_pages > 1 %}
+        <div class="pagination-section">
+          <div class="pagination-info">
+            Page {{ page_obj.number }} of {{ paginator.num_pages }}
+            ({{ paginator.count }} total records)
+          </div>
+          <div class="pagination-controls">
+            {% if page_obj.has_previous %}
+              <a href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}" class="pagination-btn first-page"><i class="fas fa-angle-double-left"></i> First</a>
+              <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}" class="pagination-btn prev-page"><i class="fas fa-chevron-left"></i> Previous</a>
+            {% else %}
+              <span class="pagination-btn disabled"><i class="fas fa-angle-double-left"></i> First</span>
+              <span class="pagination-btn disabled"><i class="fas fa-chevron-left"></i> Previous</span>
+            {% endif %}
+            <div class="page-numbers">
+              {% for num in page_obj.paginator.page_range %}
+                {% if num == page_obj.number %}
+                  <span class="pagination-btn current-page">{{ num }}</span>
+                {% elif num >= page_obj.number|add:'-2' and num <= page_obj.number|add:'2' %}
+                  <a href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}" class="pagination-btn page-number">{{ num }}</a>
+                {% elif num == 1 or num == paginator.num_pages %}
+                  <a href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}" class="pagination-btn page-number">{{ num }}</a>
+                {% elif num == page_obj.number|add:'-3' or num == page_obj.number|add:'3' %}
+                  <span class="pagination-dots">...</span>
+                {% endif %}
+              {% endfor %}
+            </div>
+            {% if page_obj.has_next %}
+              <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}" class="pagination-btn next-page">Next <i class="fas fa-chevron-right"></i></a>
+              <a href="?page={{ paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}" class="pagination-btn last-page">Last <i class="fas fa-angle-double-right"></i></a>
+            {% else %}
+              <span class="pagination-btn disabled">Next <i class="fas fa-chevron-right"></i></span>
+              <span class="pagination-btn disabled">Last <i class="fas fa-angle-double-right"></i></span>
+            {% endif %}
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <script src="{% static "js/history.js" %}"></script>
+  </body>
+</html>

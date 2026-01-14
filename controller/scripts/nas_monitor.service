@@ -1,0 +1,30 @@
+[Unit]
+Description=Shimsy NAS Monitor and Auto-Mount Service
+After=network-online.target
+Wants=network-online.target
+StartLimitBurst=5
+StartLimitIntervalSec=300
+
+[Service]
+Type=simple
+User=ecdysis
+Group=ecdysis
+ExecStart=/usr/bin/python3 /home/ecdysis/shimsy/controller/scripts/nas_monitor.py
+Restart=always
+RestartSec=30
+Environment=PYTHONPATH=/home/ecdysis/shimsy/controller/scripts
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=shimsy-nas-monitor
+
+# Security
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/home/ecdysis/shimsy /home/ecdysis/shimsy_scans /home/ecdysis/shimsy_temp
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,479 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="{% static 'images/2.png' %}" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>Shimsy Controller</title>
+    <link rel="stylesheet" href="{% static "css/home.css" %}">
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <img src="{% static 'images/1.png' %}" alt="Logo" />
+        <h1>Shimsy Control Panel</h1>
+        <div class="header-buttons">
+          <a href="/history/" class="nav-link" target="_blank"><i class="fas fa-history"></i> View History</a>
+          <button class="nav-link" onclick="showFolderManagement()"><i class="fas fa-folder"></i> Folder Management</button>
+          <a href="/unstitched/" class="nav-link stitcher-btn" target="_blank"><i class="fas fa-puzzle-piece"></i> Unstitched Runs</a>
+        </div>
+      </div>
+
+      <div class="main-content">
+        <div class="form-section">
+          <h2 class="form-title"><i class="fas fa-cog"></i> Sample Configuration</h2>
+          <form method="post" id="scanForm">
+            {% csrf_token %}
+            <div class="input-group">
+              <label><i class="fas fa-clipboard-list"></i> Template</label>
+              <select id="templateOption" required>
+                <option value="default" selected>Default</option>
+                <option value="custom">Custom</option>
+              </select>
+            </div>
+
+            <div class="input-row">
+              <div class="input-group">
+                <label for="name"><i class="fas fa-user"></i> Your Name</label>
+                <input
+                  type="text"
+                  placeholder="Enter your name"
+                  id="name"
+                  name="name"
+                />
+              </div>
+              <div class="input-group">
+                <label for="name2"><i class="fas fa-users"></i> Second Person (Optional)</label>
+                <input
+                  type="text"
+                  placeholder="Enter second person's name"
+                  id="name2"
+                  name="name2"
+                />
+              </div>
+            </div>
+
+            <div class="sample-grid">
+              <div class="sample-card">
+                <div class="sample-label">Dish 1</div>
+                <div class="sample-inputs">
+                  <input
+                    type="text"
+                    id="site1"
+                    placeholder="Site No. (1-4 digits)"
+                    maxlength="4"
+                    pattern="\d{1,4}"
+                    required
+                  />
+                  <select id="type1" required>
+                    <option value="" disabled selected>Sample Type</option>
+                    <option value="VegetationSweep">Vegetation Sweep</option>
+                    <option value="Quadrat">Quadrat</option>
+                    <option value="BeeBowl">Bee Bowl</option>
+                    <option value="StickyTrap">Sticky Trap</option>
+                    <option value="PanTrap">Pan Trap</option>
+                    <option value="Test">Test</option>
+                  </select>
+                  <select id="time1" required>
+                    <option value="" disabled selected>Transect</option>
+                    <option value="T1">T1</option>
+                    <option value="T2">T2</option>
+                    <option value="T3">T3</option>
+                    <option value="T4">T4</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="sample-card">
+                <div class="sample-label">
+                  Dish 2
+                  <button type="button" class="copy-btn" onclick="copyPreviousDish(2)" title="Copy from Dish 1">
+                    COPY
+                  </button>
+                </div>
+                <div class="sample-inputs">
+                  <input
+                    type="text"
+                    id="site2"
+                    placeholder="Site No. (1-4 digits)"
+                    maxlength="4"
+                    pattern="\d{1,4}"
+                    required
+                  />
+                  <select id="type2" required>
+                    <option value="" disabled selected>Sample Type</option>
+                    <option value="VegetationSweep">Vegetation Sweep</option>
+                    <option value="Quadrat">Quadrat</option>
+                    <option value="BeeBowl">Bee Bowl</option>
+                    <option value="StickyTrap">Sticky Trap</option>
+                    <option value="PanTrap">Pan Trap</option>
+                    <option value="Test">Test</option>
+                  </select>
+                  <select id="time2" required>
+                    <option value="" disabled selected>Transect</option>
+                    <option value="T1">T1</option>
+                    <option value="T2">T2</option>
+                    <option value="T3">T3</option>
+                    <option value="T4">T4</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="sample-card">
+                <div class="sample-label">
+                  Dish 3
+                  <button type="button" class="copy-btn" onclick="copyPreviousDish(3)" title="Copy from Dish 2">
+                    COPY
+                  </button>
+                </div>
+                <div class="sample-inputs">
+                  <input
+                    type="text"
+                    id="site3"
+                    placeholder="Site No. (1-4 digits)"
+                    maxlength="4"
+                    pattern="\d{1,4}"
+                    required
+                  />
+                  <select id="type3" required>
+                    <option value="" disabled selected>Sample Type</option>
+                    <option value="VegetationSweep">Vegetation Sweep</option>
+                    <option value="Quadrat">Quadrat</option>
+                    <option value="BeeBowl">Bee Bowl</option>
+                    <option value="StickyTrap">Sticky Trap</option>
+                    <option value="PanTrap">Pan Trap</option>
+                    <option value="Test">Test</option>
+                  </select>
+                  <select id="time3" required>
+                    <option value="" disabled selected>Transect</option>
+                    <option value="T1">T1</option>
+                    <option value="T2">T2</option>
+                    <option value="T3">T3</option>
+                    <option value="T4">T4</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="sample-card">
+                <div class="sample-label">
+                  Dish 6
+                  <button type="button" class="copy-btn" onclick="copyPreviousDish(6)" title="Copy from Dish 5">
+                    COPY
+                  </button>
+                </div>
+                <div class="sample-inputs">
+                  <input
+                    type="text"
+                    id="site6"
+                    placeholder="Site No. (1-4 digits)"
+                    maxlength="4"
+                    pattern="\d{1,4}"
+                    required
+                  />
+                  <select id="type6" required>
+                    <option value="" disabled selected>Sample Type</option>
+                    <option value="VegetationSweep">Vegetation Sweep</option>
+                    <option value="Quadrat">Quadrat</option>
+                    <option value="BeeBowl">Bee Bowl</option>
+                    <option value="StickyTrap">Sticky Trap</option>
+                    <option value="PanTrap">Pan Trap</option>
+                    <option value="Test">Test</option>
+                  </select>
+                  <select id="time6" required>
+                    <option value="" disabled selected>Transect</option>
+                    <option value="T1">T1</option>
+                    <option value="T2">T2</option>
+                    <option value="T3">T3</option>
+                    <option value="T4">T4</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="sample-card">
+                <div class="sample-label">
+                  Dish 5
+                  <button type="button" class="copy-btn" onclick="copyPreviousDish(5)" title="Copy from Dish 4">
+                    COPY
+                  </button>
+                </div>
+                <div class="sample-inputs">
+                  <input
+                    type="text"
+                    id="site5"
+                    placeholder="Site No. (1-4 digits)"
+                    maxlength="4"
+                    pattern="\d{1,4}"
+                    required
+                  />
+                  <select id="type5" required>
+                    <option value="" disabled selected>Sample Type</option>
+                    <option value="VegetationSweep">Vegetation Sweep</option>
+                    <option value="Quadrat">Quadrat</option>
+                    <option value="BeeBowl">Bee Bowl</option>
+                    <option value="StickyTrap">Sticky Trap</option>
+                    <option value="PanTrap">Pan Trap</option>
+                    <option value="Test">Test</option>
+                  </select>
+                  <select id="time5" required>
+                    <option value="" disabled selected>Transect</option>
+                    <option value="T1">T1</option>
+                    <option value="T2">T2</option>
+                    <option value="T3">T3</option>
+                    <option value="T4">T4</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="sample-card">
+                <div class="sample-label">
+                  Dish 4
+                  <button type="button" class="copy-btn" onclick="copyPreviousDish(4)" title="Copy from Dish 3">
+                    COPY
+                  </button>
+                </div>
+                <div class="sample-inputs">
+                  <input
+                    type="text"
+                    id="site4"
+                    placeholder="Site No. (1-4 digits)"
+                    maxlength="4"
+                    pattern="\d{1,4}"
+                    required
+                  />
+                  <select id="type4" required>
+                    <option value="" disabled selected>Sample Type</option>
+                    <option value="VegetationSweep">Vegetation Sweep</option>
+                    <option value="Quadrat">Quadrat</option>
+                    <option value="BeeBowl">Bee Bowl</option>
+                    <option value="StickyTrap">Sticky Trap</option>
+                    <option value="PanTrap">Pan Trap</option>
+                    <option value="Test">Test</option>
+                  </select>
+                  <select id="time4" required>
+                    <option value="" disabled selected>Transect</option>
+                    <option value="T1">T1</option>
+                    <option value="T2">T2</option>
+                    <option value="T3">T3</option>
+                    <option value="T4">T4</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <div class="control-section">
+          <div class="run-button-container">
+            <button type="button" id="runButton">RUN</button>
+            <div id="status"></div>
+          </div>
+
+          <div class="actions-section">
+            <h3 class="action-title"><i class="fas fa-redo"></i> Retake Sample</h3>
+            <form id="retakeForm">
+              <div class="input-group">
+                <label for="retake-sample"><i class="fas fa-redo"></i> Retake Dish Number (1-6)</label>
+                <input
+                  type="number"
+                  id="retake-sample"
+                  name="retake-sample"
+                  min="1"
+                  max="6"
+                  placeholder="Enter dish number"
+                  required
+                />
+              </div>
+              <button
+                type="button"
+                id="retakeButton"
+                class="retake-btn"
+                onclick="retakeSample()"
+              >
+                 <i class="fas fa-redo"></i> Retake Selected Dish
+              </button>
+            </form>
+          </div>
+
+
+          <div class="actions-section">
+            <h3 class="action-title"><i class="fas fa-puzzle-piece"></i> Panorama Stitcher</h3>
+            <div class="input-group">
+              <label for="run-folder-select"><i class="fas fa-folder"></i> Select Run Folder</label>
+              <select id="run-folder-select" onchange="onRunFolderChange()">
+                <option value="">Loading run folders...</option>
+              </select>
+            </div>
+            <div id="run-info-display" style="
+              margin: 15px 0;
+              padding: 15px;
+              background: linear-gradient(135deg, #f8f9ff, #e3e8ef);
+              border-radius: 10px;
+              border-left: 4px solid #4a7c59;
+              font-size: 14px;
+              text-align: center;
+            ">
+              <div style="font-weight: 600; color: #2c3e50; margin-bottom: 8px;">
+                FOLDER: <span id="run-folder-name">Loading run info...</span>
+              </div>
+              <div id="stitching-status-indicator" style="display: none; margin-bottom: 8px;">
+                <span style="background: #22c55e; color: white; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">
+                  <i class="fas fa-check"></i> STITCHED
+                </span>
+              </div>
+              <div style="color: #34495e; font-size: 12px;">
+                SUBFOLDERS: <span id="subfolder-count">0</span> folders will be uploaded
+              </div>
+            </div>
+            <button
+              type="button"
+              id="previewImages"
+              class="download-btn"
+              style="margin-top: 10px; background: linear-gradient(135deg, #17a2b8, #138496);"
+              onclick="handlePreviewImages()"
+            >
+               <i class="fas fa-eye"></i> Preview Images
+            </button>
+
+            <button
+              type="button"
+              id="uploadToStitcher"
+              class="download-btn stitcher-btn"
+              style="margin-top: 10px;"
+ onclick="console.log('Stitch Images button clicked!'); handleStitchImages();"
+              disabled
+              title="Please preview images first before stitching"
+            >
+               <i class="fas fa-puzzle-piece"></i> Stitch Images
+            </button>
+            <div id="stitcher-status" style="margin-top: 10px; font-size: 14px; text-align: center;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="confirmationModal" class="modal-overlay">
+      <div class="modal-content">
+        <div class="modal-icon"><i class="fas fa-exclamation"></i></div>
+        <div id="modal-run-number" class="run-number-badge" style="display: none; text-align: center; margin-bottom: 15px;">
+          <span id="modal-run-number-value"></span>
+        </div>
+        <div id="modal-stitching-status-indicator" style="display: none; text-align: center; margin-bottom: 15px;">
+          <span style="background: #22c55e; color: white; padding: 3px 10px; border-radius: 4px; font-size: 12px; font-weight: 600;">
+            <i class="fas fa-check"></i> STITCHED
+          </span>
+        </div>
+        <h2 class="modal-title">Confirm Stitching Process</h2>
+        <div class="modal-message">
+          <strong>Important:</strong> Please make sure to review sample images before proceeding.
+          <br><br>
+          Select which folders to upload to the Stitcher API for panorama creation:
+        </div>
+        <div id="folder-selection" class="folder-selection">
+        </div>
+        <div class="modal-buttons">
+ <button class="modal-btn modal-btn-confirm" id="confirm-stitching-btn" onclick="console.log('Confirm button clicked!'); console.log('Event target:', event.target); console.log('Current target:', event.currentTarget); confirmStitching();">
+            <i class="fas fa-check"></i> Confirm
+          </button>
+          <button class="modal-btn modal-btn-cancel" onclick="closeConfirmationModal()">
+            <i class="fas fa-times"></i> Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div id="stitchedWarningModal" class="modal-overlay" style="z-index: 1001;">
+      <div class="modal-content" style="max-width: 500px;">
+        <div class="modal-icon" style="background: #f59e0b; color: white;"><i class="fas fa-exclamation-triangle"></i></div>
+        <h2 class="modal-title" style="color: #f59e0b;">Already Stitched Run</h2>
+        <div class="modal-message">
+          <strong>Warning:</strong> This run has already been fully stitched.
+          <br><br>
+          Are you sure you want to stitch it again? This will create duplicate panoramas.
+        </div>
+        <div class="modal-buttons">
+          <button class="modal-btn modal-btn-confirm" id="proceed-stitching-btn" style="background: #f59e0b;">
+            <i class="fas fa-redo"></i> Proceed Anyway
+          </button>
+          <button class="modal-btn modal-btn-cancel" onclick="closeStitchedWarningModal()">
+            <i class="fas fa-times"></i> Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div id="imagePreviewModal" class="image-preview-modal">
+      <div class="preview-header">
+        <div class="preview-title-section">
+            <h2 class="preview-title"><i class="fas fa-eye"></i> Image Preview</h2>
+          <div id="preview-run-number" class="run-number-badge" style="display: none;">
+            <span id="preview-run-number-value"></span>
+          </div>
+        </div>
+        <div class="preview-controls">
+          <div class="folder-nav">
+            <label for="folder-selector" style="font-weight: 600; color: #2c3e50;">Folder:</label>
+            <select id="folder-selector" onchange="onFolderSelectionChange()">
+              <option value="">Select a folder...</option>
+            </select>
+          </div>
+          <button class="preview-close" onclick="closeImagePreview()">
+            <i class="fas fa-times"></i> Close
+          </button>
+        </div>
+      </div>
+      <div class="preview-content">
+        <div id="image-grid" class="image-grid">
+        </div>
+      </div>
+    </div>
+
+    <div id="imageViewerModal" class="image-viewer-modal">
+      <div class="viewer-header">
+        <button id="viewer-prev-btn" class="viewer-nav-btn" onclick="navigateImage(-1)"><i class="fas fa-arrow-left"></i> PREV</button>
+        <h2 id="viewer-title" class="viewer-title">Image Title</h2>
+        <button id="viewer-next-btn" class="viewer-nav-btn" onclick="navigateImage(1)">NEXT <i class="fas fa-arrow-right"></i></button>
+        <div class="viewer-rotate-controls">
+          <button id="viewer-rotate-left" class="viewer-rotate-btn" onclick="rotateImage(-90)" title="Rotate Left"><i class="fas fa-undo"></i> Rotate Left</button>
+          <button id="viewer-rotate-right" class="viewer-rotate-btn" onclick="rotateImage(90)" title="Rotate Right">Rotate Right <i class="fas fa-redo"></i></button>
+        </div>
+        <button class="viewer-close" onclick="closeImageViewer()"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="viewer-content">
+        <div class="viewer-image-container">
+          <img id="viewer-image" class="viewer-image" alt="Full size image" />
+        </div>
+      </div>
+    </div>
+
+    <div id="folderManagementModal" class="modal-overlay" style="z-index: 1002;">
+      <div class="modal-content" style="max-width: 800px; width: 95%;">
+        <div class="modal-icon" style="background: linear-gradient(135deg, #4a7c59, #2d5016);"><i class="fas fa-folder"></i></div>
+        <h2 class="modal-title">Folder Management</h2>
+        <div class="modal-message">
+          <strong>Important:</strong> Please make sure to only change either Site No, Sample Type, or Transect and keep the other info the same.
+        </div>
+        <div class="input-group" style="margin: 20px 0;">
+          <label for="folder-mgmt-run-select"><i class="fas fa-folder"></i> Select Run Folder</label>
+          <select id="folder-mgmt-run-select" onchange="onFolderMgmtRunChange()">
+            <option value="">Loading run folders...</option>
+          </select>
+        </div>
+        <div id="folder-management-list" class="folder-management-list">
+          <div class="no-folders-message">
+            <div class="no-images-icon"><i class="fas fa-folder"></i></div>
+            <h3>Select a Run Folder</h3>
+            <p>Choose a run folder from the dropdown to manage its subfolders</p>
+          </div>
+        </div>
+        <div class="modal-buttons">
+          <button class="modal-btn modal-btn-cancel" onclick="closeFolderManagement()">
+            <i class="fas fa-times"></i> Close
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script src="{% static "js/home.js" %}"></script>
+  </body>
+</html>

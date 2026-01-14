@@ -1,0 +1,127 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="{% static 'images/2.png' %}" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>Unstitched Runs - Shimsy Controller</title>
+    <link rel="stylesheet" href="{% static "css/unstitched_runs.css" %}">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="{% static 'images/1.png' %}" alt="Logo" />
+            <h1>Unstitched Runs</h1>
+            <div class="header-buttons">
+                <a href="/history/" class="nav-link"><i class="fas fa-history"></i> View History</a>
+                <a href="/" class="nav-link"><i class="fas fa-home"></i> Home</a>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <h2 class="page-title"><i class="fas fa-clock"></i> Runs Awaiting Stitching</h2>
+            {% if unstitched_runs %}
+                <table class="runs-table">
+                    <thead>
+                        <tr>
+                            <th>Run Folder</th>
+                            <th>Created</th>
+                            <th>Progress</th>
+                            <th>Status</th>
+                            <th>Remaining Folders</th>
+                            <th>Last Updated</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for run in unstitched_runs %}
+                        <tr>
+                            <td>
+                                <strong>{{ run.run_folder }}</strong>
+                            </td>
+                            <td>
+                                <span class="utc-time" data-utc="{{ run.created_at|date:'c' }}">{{ run.created_at|date:"M d, Y H:i" }}</span>
+                            </td>
+                            <td>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: {{ run.stitching_progress }}%"></div>
+                                </div>
+                                <div class="progress-text">
+                                    {{ run.stitched_subfolders }} / {{ run.total_subfolders }} folders stitched
+                                </div>
+                            </td>
+                            <td>
+                                {% if run.is_complete %}
+                                    <span class="status-badge status-complete">Complete</span>
+                                {% elif run.stitched_subfolders > 0 %}
+                                    <span class="status-badge status-partial">Partial</span>
+                                {% else %}
+                                    <span class="status-badge status-none">None</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if run.is_complete %}
+                                    <span style="color: #22c55e; font-weight: 600;"><i class="fas fa-check"></i> All Complete</span>
+                                {% elif run.remaining_folders %}
+                                    <div style="max-width: 200px;">
+                                        {% for folder in run.remaining_folders %}
+                                            <div style="margin: 2px 0; padding: 2px 6px; background: #fef3c7; border-radius: 4px; font-size: 12px; color: #92400e;">
+                                                <i class="fas fa-folder"></i> {{ folder }}
+                                            </div>
+                                        {% endfor %}
+                                        {% if run.remaining_folders|length >= 10 %}
+                                            <div style="margin: 2px 0; padding: 2px 6px; background: #e5e7eb; border-radius: 4px; font-size: 11px; color: #6b7280; text-align: center;">
+                                                ... and more
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                {% else %}
+                                    <span style="color: #6c757d;">No data</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="utc-time" data-utc="{{ run.last_updated|date:'c' }}">{{ run.last_updated|date:"M d, Y H:i" }}</span>
+                            </td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="btn btn-secondary" onclick="showDiscardModal('{{ run.run_folder }}')"><i class="fas fa-trash"></i> Discard</button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-state-icon"><i class="fas fa-party-horn"></i></div>
+                    <h3><i class="fas fa-check-circle"></i> All Runs Stitched!</h3>
+                    <p>Great job! All runs have been successfully stitched. No unstitched runs found.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div id="discardModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-exclamation-triangle"></i> Confirm Discard</h3>
+                <span class="modal-close" onclick="closeDiscardModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p><strong>Are you sure you want to discard this run?</strong></p>
+                <p>Discarding this run will only remove the record from Unstitched Runs, and the run won't be marked as stitched. You'll have to do another run for the same samples or stitch remaining folders through the home page stitcher functionality.</p>
+                <div class="modal-run-info">
+                    <strong>Run Folder:</strong> <span id="modalRunFolder"></span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeDiscardModal()">Cancel</button>
+                <button class="btn btn-danger" onclick="confirmDiscard()">Yes, Discard Run</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="{% static "js/unstitched_runs.js" %}"></script>
+</body>
+</html>

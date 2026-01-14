@@ -1,0 +1,72 @@
+# Database Files
+db.sqlite3
+
+# Runtime JSON State Files (written by application)
+controller/scan_config.json
+controller/last_position.json
+controller/scan_run_counter.json
+controller/template_flag.json
+controller/current_delay.json
+custom_path.json
+manual_path.json
+
+# Python Cache and Virtual Environment
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+.venv/
+env/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# IDE and Editor Files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+.settings/
+
+# OS Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+.directory
+
+# Logs and Temporary Files
+*.log
+*.tmp
+*.bak
+*.cache
+
+# Static Files (if generated)
+staticfiles/
+media/
+
+# Django specific
+*.pot
+*.pyc
+local_settings.py
