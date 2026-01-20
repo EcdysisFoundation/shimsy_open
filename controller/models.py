@@ -31,7 +31,9 @@ class ScanRecord(models.Model):
     sample_type = models.CharField(max_length=50)
     transect = models.CharField(max_length=10)
     run_number = models.IntegerField(default=1)
-    retake = models.BooleanField(default=False)
+    retake = models.BooleanField(default=False, help_text="True if this sample was retaken on Shimsy (Shimsy-Retake)")
+    stitcher_retake = models.BooleanField(default=False, help_text="True if this sample was requested for retake by Stitcher app")
+    stitched = models.BooleanField(default=False, help_text="True if this sample has been successfully stitched")
     is_splitted = models.BooleanField(default=False, help_text="True if this sample was split (duplicate)")
 
     def __str__(self):
@@ -92,3 +94,26 @@ class UnstitchedRun(models.Model):
         verbose_name = "Unstitched Run"
         verbose_name_plural = "Unstitched Runs"
         ordering = ['-created_at']
+
+class RescanRequest(models.Model):
+    site_number = models.CharField(max_length=4)
+    sample_type = models.CharField(max_length=50)
+    transect = models.CharField(max_length=10)
+    requested_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = "Rescan Request"
+        verbose_name_plural = "Rescan Requests"
+        ordering = ['-requested_at']
+        unique_together = ['site_number', 'sample_type', 'transect']
+    
+    def __str__(self):
+        from .utils import convert_sample_type_full_to_abbrev
+        abbrev = convert_sample_type_full_to_abbrev(self.sample_type)
+        return f"{self.site_number}_{abbrev}_{self.transect}"
+    
+    @property
+    def display_name(self):
+        from .utils import convert_sample_type_full_to_abbrev
+        abbrev = convert_sample_type_full_to_abbrev(self.sample_type)
+        return f"{self.site_number}_{abbrev}_{self.transect}"

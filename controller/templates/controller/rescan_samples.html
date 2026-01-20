@@ -1,0 +1,123 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="{% static 'images/2.png' %}" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>Rescan Samples - Shimsy Controller</title>
+    <link rel="stylesheet" href="{% static "css/rescan_samples.css" %}">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="{% static 'images/1.png' %}" alt="Logo" />
+            <h1>Rescan Samples</h1>
+            <div class="header-buttons">
+                <a href="/history/" class="nav-link"><i class="fas fa-history"></i> View History</a>
+                <a href="/" class="nav-link"><i class="fas fa-home"></i> Home</a>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <h2 class="page-title"><i class="fas fa-redo"></i> Samples Requested for Rescan</h2>
+            
+            {% if rescan_requests %}
+                <table class="rescan-table">
+                    <thead>
+                        <tr>
+                            <th>Sample Name</th>
+                            <th>Site Number</th>
+                            <th>Sample Type</th>
+                            <th>Transect</th>
+                            <th>Requested At</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for req in rescan_requests %}
+                        <tr>
+                            <td><strong>{{ req.display_name }}</strong></td>
+                            <td>{{ req.site_number }}</td>
+                            <td>{{ req.sample_type }}</td>
+                            <td>{{ req.transect }}</td>
+                            <td>
+                                <span class="utc-time" data-utc="{{ req.requested_at|date:'c' }}">
+                                    {{ req.requested_at|date:"M d, Y H:i" }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                
+                <!-- Trigger New Rescan Section -->
+                <div class="form-section">
+                    <h3 class="form-title"><i class="fas fa-play-circle"></i> Trigger New Rescan</h3>
+                    <p class="form-description">Select a sample and dish number to run a new scan for that specific dish only.</p>
+                    
+                    <div class="rescan-form">
+                        <div class="form-group">
+                            <label for="sample-select">Sample:</label>
+                            <select id="sample-select" class="form-control">
+                                <option value="">Select a sample...</option>
+                                {% for req in rescan_requests %}
+                                <option value="{{ req.id }}">{{ req.display_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="dish-select">Dish Number:</label>
+                            <select id="dish-select" class="form-control">
+                                <option value="">Select dish...</option>
+                                <option value="1">Dish 1</option>
+                                <option value="2">Dish 2</option>
+                                <option value="3">Dish 3</option>
+                                <option value="4">Dish 4</option>
+                                <option value="5">Dish 5</option>
+                                <option value="6">Dish 6</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="rescan-form" style="margin-top: 20px;">
+                        <div class="form-group">
+                            <label for="rescan-name">Your Name <span style="color: red;">*</span>:</label>
+                            <input
+                                type="text"
+                                placeholder="Enter your name"
+                                id="rescan-name"
+                                name="rescan-name"
+                                class="form-control"
+                                required
+                            />
+                        </div>
+                        <div class="form-group">
+                            <label for="rescan-name2">Second Person (Optional):</label>
+                            <input
+                                type="text"
+                                placeholder="Enter second person's name"
+                                id="rescan-name2"
+                                name="rescan-name2"
+                                class="form-control"
+                            />
+                        </div>
+                    </div>
+                    
+                    <button id="triggerRescanButton" class="btn btn-primary" style="margin-top: 20px;">
+                        <i class="fas fa-cog"></i> Run Scan
+                    </button>
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-state-icon"><i class="fas fa-check-circle"></i></div>
+                    <h3><i class="fas fa-smile"></i> No Rescan Requests!</h3>
+                    <p>All samples are in good shape. No rescan requests from the stitcher.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <script src="{% static "js/rescan_samples.js" %}"></script>
+</body>
+</html>

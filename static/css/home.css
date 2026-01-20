@@ -331,12 +331,6 @@ select {
   box-shadow: 0 6px 20px rgba(255, 193, 7, 0.4);
 }
 
-.retake-btn.running {
-  background: linear-gradient(135deg, #dc3545, #c82333);
-  color: white;
-  animation: pulse 2s infinite;
-}
-
 .stitcher-btn {
   background: linear-gradient(135deg, #6366f1, #4f46e5);
   color: white;

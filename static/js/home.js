@@ -406,54 +406,13 @@ document
   .addEventListener("submit", (e) => e.preventDefault());
 
 function retakeSample() {
-  const retakeBtn = document.getElementById("retakeButton");
-  const statusDiv = document.getElementById("status");
-  
-  if (!retakeBtn) {
-    console.error("Retake button not found!");
-    return;
-  }
-  
-  if (retakeBtn.classList.contains("running")) {
-    fetch("/stop-retake/", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({}),
-    })
-    .then((res) => res.json())
-    .then((data) => {
-      retakeBtn.innerHTML = '<i class="fas fa-redo"></i> Retake Selected Dish';
-      retakeBtn.classList.remove("running");
-      statusDiv.textContent = data.status === "success" 
-        ? "Retake stopped by user."
-        : `Error: ${data.message}`;
-      setTimeout(() => {
-        console.log('Refreshing run folders after retake stop...');
-        loadAllRunFolders();
-      }, 1000);
-    })
-    .catch((err) => {
-      statusDiv.textContent = "Request failed: " + err;
-    });
-    return;
-  }
-
   const sample = document.getElementById("retake-sample").value.trim();
   if (!sample || isNaN(sample) || sample < 1 || sample > 6) {
     alert("Please enter a valid sample number between 1 and 6.");
     return;
   }
 
-  retakeBtn.innerHTML = '<i class="fas fa-stop"></i> Stop Retake';
-  retakeBtn.classList.add("running");
-  console.log("Retake button updated - innerHTML:", retakeBtn.innerHTML, "has running class:", retakeBtn.classList.contains("running"));
-  
-  if (!retakeBtn.classList.contains("running")) {
-    console.error("Failed to add running class to retake button!");
-  }
-  
+  const statusDiv = document.getElementById("status");
   statusDiv.textContent = `Retaking dish ${sample}...`;
 
   fetch("/retake-sample/", {
@@ -463,23 +422,19 @@ function retakeSample() {
   })
     .then((res) => res.json())
     .then((data) => {
+      statusDiv.textContent =
+        data.status === "success"
+          ? `Retake started for dish ${sample}.`
+          : `Error: ${data.message}`;
       if (data.status === "success") {
-        statusDiv.textContent = `Retake started for dish ${sample}.`;
         setTimeout(() => {
-          console.log('Refreshing run folders after retake completion...');
+ console.log('Refreshing run folders after retake completion...');
           loadAllRunFolders();
         }, 2000);
-      } else {
-        statusDiv.textContent = `Error: ${data.message}`;
-        retakeBtn.innerHTML = '<i class="fas fa-redo"></i> Retake Selected Dish';
-        retakeBtn.classList.remove("running");
       }
     })
     .catch((err) => {
-      console.error("Retake request failed:", err);
       statusDiv.textContent = "Request failed: " + err;
-      retakeBtn.innerHTML = '<i class="fas fa-redo"></i> Retake Selected Dish';
-      retakeBtn.classList.remove("running");
     });
 }
 

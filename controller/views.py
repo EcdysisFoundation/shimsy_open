@@ -1,4 +1,4 @@
-from .models import ScanSettings, ScanConfiguration, ScanRecord, UnstitchedRun
+from .models import ScanSettings, ScanConfiguration, ScanRecord, UnstitchedRun, RescanRequest
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -23,9 +23,8 @@ import tempfile
 from PIL import Image
 from django.utils import timezone
 
-
 def create_or_update_unstitched_run(run_folder, run_path, total_subfolders):
-    """Create or update an unstitched run record"""
+    
     try:
         unstitched_run, created = UnstitchedRun.objects.get_or_create(
             run_folder=run_folder,
@@ -47,7 +46,7 @@ def create_or_update_unstitched_run(run_folder, run_path, total_subfolders):
         return None
 
 def update_stitching_progress(run_folder, stitched_folder_name):
-    """Update the stitching progress for a run by adding a stitched folder"""
+    
     try:
         unstitched_run = UnstitchedRun.objects.get(run_folder=run_folder)
         stitched_folders = unstitched_run.get_stitched_folders()
@@ -72,14 +71,12 @@ def update_stitching_progress(run_folder, stitched_folder_name):
 def control_page(request):
     return render(request, "controller/control.html")
 
-
 def home(request):
     return render(request, 'controller/home.html')
 
-
 active_process = None
 
-RETURN_HOME_SCRIPT = "/home/ecdysis/shimsy/controller/scripts/return_home.py"
+RETURN_HOME_SCRIPT = "/home/ecdysis/shimmsy/shimsy/controller/scripts/return_home.py"
 
 @csrf_exempt
 def stop_scan(request):
@@ -96,7 +93,7 @@ def stop_scan(request):
 @csrf_exempt
 def return_home(request):
     try:
-        command = ['python3', '/home/ecdysis/shimsy/controller/scripts/return_home.py']
+        command = ['python3', '/home/ecdysis/shimmsy/shimsy/controller/scripts/return_home.py']
         proc = subprocess.run(command, capture_output=True, text=True)
         return JsonResponse({
             'status': 'success' if proc.returncode == 0 else 'error',
@@ -105,7 +102,6 @@ def return_home(request):
         })
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)})
-
 
 @csrf_exempt
 def run_full_scan(request):
@@ -119,7 +115,7 @@ def run_full_scan(request):
 
             sample_map = {str(i + 1): s for i, s in enumerate(samples)}
 
-            scan_config_path = "/home/ecdysis/shimsy/controller/scan_config.json"
+            scan_config_path = "/home/ecdysis/shimmsy/shimsy/controller/scan_config.json"
             sample_names_ordered = [
                 sample_map.get(str(i), f"UnknownSample{i}") if sample_map.get(str(i), "").strip() not in ["", "--"] else f"UnknownSample{i}"
                 for i in range(1, 7)
@@ -129,16 +125,16 @@ def run_full_scan(request):
                 json.dump({"samples": sample_names_ordered}, f, indent=4)
 
             template = payload.get("template", "default").lower()
-            template_flag_path = "/home/ecdysis/shimsy/controller/template_flag.json"
+            template_flag_path = "/home/ecdysis/shimmsy/shimsy/controller/template_flag.json"
             with open(template_flag_path, "w") as f:
                 json.dump({"template": template}, f)
 
-            command = ['python3', '/home/ecdysis/shimsy/controller/scripts/run_scan.py']
+            command = ['python3', '/home/ecdysis/shimmsy/shimsy/controller/scripts/run_scan.py']
             active_process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
             stdout, stderr = active_process.communicate()
             success = active_process.returncode == 0
 
-            RUN_COUNTER_PATH = "/home/ecdysis/shimsy/controller/scan_run_counter.json"
+            RUN_COUNTER_PATH = "/home/ecdysis/shimmsy/shimsy/controller/scan_run_counter.json"
             try:
                 with open(RUN_COUNTER_PATH) as f:
                     run_number = json.load(f).get("run", 1)
@@ -209,12 +205,10 @@ def run_full_scan(request):
                 'message': 'Scan finished' if success else 'Scan failed'
             })
 
-
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)})
 
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
-
 
 def scan_history(request):
     from django.core.paginator import Paginator
@@ -266,7 +260,7 @@ def scan_history(request):
     return render(request, "controller/history.html", context)
 
 def unstitched_runs(request):
-    """Display table of runs that haven't been fully stitched yet"""
+    
     unstitched_runs = UnstitchedRun.objects.filter(is_complete=False).order_by('-created_at')
     for run in unstitched_runs:
         try:
@@ -293,7 +287,7 @@ def export_csv(request):
         response['Content-Disposition'] = 'attachment; filename="scan_history.csv"'
 
         writer = csv.writer(response)
-        writer.writerow(['Timestamp', 'Name', 'Name 2', 'Site Number', 'Sample Type', 'Transect', 'Run Number', 'Retake', 'Splitted', 'Runs on Date'])
+        writer.writerow(['Timestamp', 'Name', 'Name 2', 'Site Number', 'Sample Type', 'Transect', 'Run Number', 'Shimsy-Retake', 'Stitcher-Rescan', 'Stitched', 'Splitted', 'Runs on Date'])
 
         runs_per_date = defaultdict(set)
         for record in ScanRecord.objects.all():
@@ -313,6 +307,8 @@ def export_csv(request):
                 record.transect,
                 record.run_number,
                 'Yes' if record.retake else 'No',
+                'Yes' if record.stitcher_retake else 'No',
+                'Yes' if record.stitched else 'No',
                 'Yes' if record.is_splitted else 'No',
                 runs_on_date
             ])
@@ -329,9 +325,9 @@ def retake_sample(request):
             if not sample:
                 return JsonResponse({"status": "error", "message": "Sample not provided"})
 
-            subprocess.Popen(["python3", "/home/ecdysis/shimsy/controller/scripts/retake_sample.py", str(sample)])
+            subprocess.Popen(["python3", "/home/ecdysis/shimmsy/shimsy/controller/scripts/retake_sample.py", str(sample)])
 
-            SCAN_CONFIG = "/home/ecdysis/shimsy/controller/scan_config.json"
+            SCAN_CONFIG = "/home/ecdysis/shimmsy/shimsy/controller/scan_config.json"
             try:
                 with open(SCAN_CONFIG) as f:
                     cfg = json.load(f)
@@ -355,7 +351,7 @@ def retake_sample(request):
             if site:
                 site = site[:4]
 
-            RUN_COUNTER_PATH = "/home/ecdysis/shimsy/controller/scan_run_counter.json"
+            RUN_COUNTER_PATH = "/home/ecdysis/shimmsy/shimsy/controller/scan_run_counter.json"
             try:
                 with open(RUN_COUNTER_PATH) as f:
                     run_number = json.load(f).get("run", 1)
@@ -386,9 +382,8 @@ def retake_sample(request):
 
     return JsonResponse({"status": "error", "message": "Invalid request method"})
 
-
 def create_run_folder_zip(run_folder_path, output_zip_path):
-    """Create a zip file from the run folder containing only image files"""
+    
     with ZipFile(output_zip_path, 'w', ZIP_DEFLATED) as zipf:
         for root, dirs, files in os.walk(run_folder_path):
             for file in files:
@@ -397,9 +392,8 @@ def create_run_folder_zip(run_folder_path, output_zip_path):
                     arcname = os.path.relpath(file_path, run_folder_path)
                     zipf.write(file_path, arcname)
 
-
 def get_latest_run_folder():
-    """Get the path to the latest run folder from LAST_SCAN.txt or find latest run_XXX folder"""
+    
     scans_base = getattr(settings, 'SHIMSY_SCANS_BASE', '/home/ecdysis/shimsy_scans')
     if not os.path.exists(scans_base):
         print(f"[DEBUG] Scans base directory does not exist: {scans_base}")
@@ -445,9 +439,8 @@ def get_latest_run_folder():
         print(f"[DEBUG] Error scanning for run folders: {e}")
     return None
 
-
 def get_run_subfolders(run_folder_path):
-    """Get all subfolders in a run folder (should be 6 subfolders like 1_4058-2025-Quadrat-T4_20250908_194017)"""
+    
     try:
         subfolders = []
         for item in os.listdir(run_folder_path):
@@ -460,7 +453,7 @@ def get_run_subfolders(run_folder_path):
         return []
 
 def get_all_stitchable_folders(run_folder_path):
-    """Get count of ALL stitchable folders including retake folders"""
+    
     try:
         main_subfolders = get_run_subfolders(run_folder_path)
         total_stitchable = len(main_subfolders)
@@ -476,14 +469,8 @@ def get_all_stitchable_folders(run_folder_path):
     except Exception:
         return 0
 
-
 def parse_stitcher_zip_name(folder_name):
-    """
-    Parse folder name and extract site, sample type, transect for stitcher ZIP naming
-    Input: '1_4063-2025-Quadrat-T1_split_1_20250909_202401'
-    Output: '4063_Quadrat_T1_split_1'
-    The format: {dish}_{site}-{year}-{sample_type}-{transect}_split_{N}_{YYYYMMDD}_{HHMMSS}
-    """
+    
     try:
         print(f"[DEBUG] Parsing folder name: '{folder_name}'")
         parts = folder_name.split('_')
@@ -574,9 +561,8 @@ def parse_stitcher_zip_name(folder_name):
         print(f"[DEBUG] Error parsing folder name '{folder_name}': {e}")
         return folder_name
 
-
 def apply_image_rotations(folder_path, rotation_data):
-    """Apply rotations to images and return path to modified folder"""
+    
     if not rotation_data:
         print("[DEBUG] No rotation data provided, using original folder")
         return folder_path
@@ -639,9 +625,8 @@ def apply_image_rotations(folder_path, rotation_data):
             shutil.rmtree(temp_dir)
         return folder_path
 
-
 def upload_to_stitcher(zip_file_path, confidence_threshold=0.6, zip_filename=None):
-    """Upload zip file to stitcher API"""
+    
     api_url = f"{settings.STITCHER_URL}/upload-zip-images/"
     print(f"[DEBUG] Uploading to: {api_url}")
     print(f"[DEBUG] ZIP file: {zip_file_path}")
@@ -678,10 +663,9 @@ def upload_to_stitcher(zip_file_path, confidence_threshold=0.6, zip_filename=Non
         print(f"[ERROR] Unexpected error: {error_msg}")
         return {'success': False, 'error': error_msg}
 
-
 @csrf_exempt
 def upload_latest_run_to_stitcher(request):
-    """Upload a specific subfolder from a run to the Stitcher API service"""
+    
     print(f"[DEBUG] upload_latest_run_to_stitcher called with method: {request.method}")
     if request.method == 'POST':
         try:
@@ -857,8 +841,47 @@ def upload_latest_run_to_stitcher(request):
                     try:
                         folder_name = os.path.basename(folders_to_zip[0])
                         update_stitching_progress(run_folder_name, folder_name)
+                        
+                        
+                        parsed_info = parse_folder_name_for_database(folder_name)
+                        if parsed_info:
+                            
+                            matching_records = ScanRecord.objects.filter(
+                                site_number=parsed_info['site'],
+                                sample_type=parsed_info['sample_type'],
+                                transect=parsed_info['transect']
+                            )
+                            updated_count = matching_records.update(stitched=True)
+                            if updated_count > 0:
+                                print(f"[DEBUG] Marked {updated_count} ScanRecord(s) as stitched for {parsed_info['site']}-{parsed_info['sample_type']}-{parsed_info['transect']}")
+                            
+                            
+                            deleted_count, _ = RescanRequest.objects.filter(
+                                site_number=parsed_info['site'],
+                                sample_type=parsed_info['sample_type'],
+                                transect=parsed_info['transect']
+                            ).delete()
+                            
+                            rescan_deleted = deleted_count > 0
+                            if rescan_deleted:
+                                print(f"[DEBUG] Removed {deleted_count} RescanRequest(s) for {parsed_info['site']}-{parsed_info['sample_type']}-{parsed_info['transect']} (sample uploaded successfully)")
+                        else:
+                            from .utils import parse_stitcher_sample_name
+                            parsed_underscore = parse_stitcher_sample_name(folder_name)
+                            if parsed_underscore:
+                                deleted_count, _ = RescanRequest.objects.filter(
+                                    site_number=parsed_underscore['site_number'],
+                                    sample_type=parsed_underscore['sample_type'],
+                                    transect=parsed_underscore['transect']
+                                ).delete()
+                                rescan_deleted = deleted_count > 0
+                                if rescan_deleted:
+                                    print(f"[DEBUG] Removed {deleted_count} RescanRequest(s) for {parsed_underscore['site_number']}-{parsed_underscore['sample_type']}-{parsed_underscore['transect']} (sample uploaded successfully, parsed from underscore format)")
+                            else:
+                                rescan_deleted = False
                     except Exception as e:
-                        print(f"[WARNING] Could not update stitching progress: {e}")
+                        print(f"[WARNING] Could not update stitching progress or mark as stitched: {e}")
+                        rescan_deleted = False
                     return JsonResponse({
                         'status': 'success',
                         'message': f'Successfully uploaded {upload_description} to stitcher',
@@ -866,7 +889,8 @@ def upload_latest_run_to_stitcher(request):
                         'run_folder': run_folder_name,
                         'uploaded_folders': upload_description,
                         'confidence_threshold': confidence_threshold,
-                        'total_subfolders': len(subfolders)
+                        'total_subfolders': len(subfolders),
+                        'rescan_deleted': rescan_deleted  
                     })
                 else:
                     return JsonResponse({
@@ -896,10 +920,247 @@ def upload_latest_run_to_stitcher(request):
             }, status=500)
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
 
+@csrf_exempt
+def create_rescan_request(request):
+    
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
+    
+    try:
+        from .utils import parse_stitcher_sample_name
+        
+        body = json.loads(request.body)
+        sample_name = body.get('sample_name')
+        
+        if not sample_name:
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Missing required field: sample_name'
+            }, status=400)
+        
+        parsed = parse_stitcher_sample_name(sample_name)
+        if not parsed:
+            return JsonResponse({
+                'status': 'error',
+                'message': f'Invalid sample_name format: {sample_name}'
+            }, status=400)
+        
+        rescan_request, created = RescanRequest.objects.get_or_create(
+            site_number=parsed['site_number'],
+            sample_type=parsed['sample_type'],
+            transect=parsed['transect']
+        )
+        
+        return JsonResponse({
+            'status': 'success',
+            'message': 'Rescan request created' if created else 'Rescan request already exists',
+            'created': created,
+            'rescan_request': {
+                'id': rescan_request.id,
+                'display_name': rescan_request.display_name,
+                'requested_at': rescan_request.requested_at.isoformat()
+            }
+        })
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': str(e)
+        }, status=500)
+
+def rescan_samples(request):
+    
+    rescan_requests = RescanRequest.objects.all().order_by('-requested_at')
+
+    return render(request, 'controller/rescan_samples.html', {
+        'rescan_requests': rescan_requests
+    })
+
+@csrf_exempt
+def get_rescan_requests(request):
+    
+    if request.method == 'GET':
+        rescan_requests = RescanRequest.objects.all().order_by('-requested_at')
+        from django.utils import timezone
+        requests_data = [
+            {
+                'id': req.id,
+                'display_name': req.display_name,
+                'site_number': req.site_number,
+                'sample_type': req.sample_type,
+                'transect': req.transect,
+                'requested_at': req.requested_at.isoformat() if req.requested_at else None
+            }
+            for req in rescan_requests
+        ]
+        return JsonResponse({
+            'status': 'success',
+            'rescan_requests': requests_data
+        })
+    return JsonResponse({'status': 'error', 'message': 'Invalid method'}, status=405)
+
+@csrf_exempt
+def trigger_rescan_for_dish(request):
+    
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Invalid method'}, status=405)
+    
+    try:
+        from .utils import filter_capture_points_by_dish
+        import shutil
+        
+        body = json.loads(request.body)
+        rescan_request_id = body.get('rescan_request_id')
+        dish_number = body.get('dish_number')
+        name = body.get('name', '').strip()  
+        name2 = body.get('name2', '').strip()  
+        
+        
+        if not rescan_request_id or not dish_number:
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Missing required fields: rescan_request_id, dish_number'
+            }, status=400)
+        
+        dish_number = int(dish_number)
+        if not (1 <= dish_number <= 6):
+            return JsonResponse({
+                'status': 'error',
+                'message': 'dish_number must be between 1 and 6'
+            }, status=400)
+        
+        
+        try:
+            rescan_req = RescanRequest.objects.get(id=rescan_request_id)
+        except RescanRequest.DoesNotExist:
+            return JsonResponse({
+                'status': 'error',
+                'message': f'Rescan request {rescan_request_id} not found'
+            }, status=404)
+        
+        
+        
+        from datetime import datetime
+        from .utils import convert_sample_type_abbrev_to_full
+        year = datetime.now().year
+        
+        full_sample_type = convert_sample_type_abbrev_to_full(rescan_req.sample_type)
+        sample_name = f"{rescan_req.site_number}-{year}-{full_sample_type}-{rescan_req.transect}"
+        
+        
+        sample_names_ordered = [f"UnknownSample{i}" for i in range(1, 7)]
+        sample_names_ordered[dish_number - 1] = sample_name
+        
+        scan_config_path = "/home/ecdysis/shimmsy/shimsy/controller/scan_config.json"
+        with open(scan_config_path, "w") as f:
+            json.dump({"samples": sample_names_ordered}, f, indent=4)
+        
+        
+        filtered_path_data = filter_capture_points_by_dish(dish_number)
+        
+        
+        custom_path_file = "/home/ecdysis/shimmsy/shimsy/custom_path.json"
+        custom_path_backup = "/home/ecdysis/shimmsy/shimsy/custom_path.json.backup"
+        
+        if os.path.exists(custom_path_file):
+            shutil.copy(custom_path_file, custom_path_backup)
+        
+        
+        with open(custom_path_file, "w") as f:
+            json.dump(filtered_path_data, f, indent=2)
+        
+        
+        template_flag_path = "/home/ecdysis/shimmsy/shimsy/controller/template_flag.json"
+        with open(template_flag_path, "w") as f:
+            json.dump({"template": "custom"}, f)
+        
+        
+        command = [
+            'python3',
+            '/home/ecdysis/shimmsy/shimsy/controller/scripts/run_scan.py'
+        ]
+        
+        process = subprocess.Popen(
+            command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
+        )
+        stdout, stderr = process.communicate()
+        
+        
+        if os.path.exists(custom_path_backup):
+            shutil.move(custom_path_backup, custom_path_file)
+        elif os.path.exists(custom_path_file):
+            os.remove(custom_path_file)
+        
+        
+        with open(template_flag_path, "w") as f:
+            json.dump({"template": "default"}, f)
+        
+        if process.returncode == 0:
+            
+            RUN_COUNTER_PATH = "/home/ecdysis/shimmsy/shimsy/controller/scan_run_counter.json"
+            try:
+                with open(RUN_COUNTER_PATH) as f:
+                    run_number = json.load(f).get("run", 1)
+            except Exception:
+                run_number = 1
+            
+            
+            
+            parts = sample_name.split("-")
+            if len(parts) == 4:
+                site, _year, sample_type, transect = parts
+            elif len(parts) == 3:
+                site, sample_type, transect = parts
+            else:
+                site = rescan_req.site_number
+                sample_type = rescan_req.sample_type
+                transect = rescan_req.transect
+            
+            site = site[:4]
+            
+            
+            
+            record_name = name if name else "Rescan"
+            record = ScanRecord.objects.create(
+                name=record_name,
+                name2=name2,  
+                site_number=site,
+                sample_type=sample_type,
+                transect=transect,
+                run_number=run_number,
+                stitcher_retake=True,  
+                retake=False,  
+                stitched=False,  
+                is_splitted=False
+            )
+            print(f"[DEBUG] Created rescan ScanRecord ID: {record.id} with stitcher_retake=True")
+            
+            return JsonResponse({
+                'status': 'success',
+                'message': f'Rescan started for {rescan_req.display_name} on dish {dish_number}',
+                'sample_name': f"{dish_number}_{sample_name}",
+                'dish_number': dish_number
+            })
+        else:
+            return JsonResponse({
+                'status': 'error',
+                'message': f'Scan failed: {stderr}',
+                'stdout': stdout
+            }, status=500)
+            
+    except Exception as e:
+        import traceback
+        return JsonResponse({
+            'status': 'error',
+            'message': str(e),
+            'traceback': traceback.format_exc()
+        }, status=500)
 
 @csrf_exempt
 def get_all_run_folders(request):
-    """Get list of all available run folders"""
+    
     if request.method == 'GET':
         try:
             scans_base = getattr(settings, 'SHIMSY_SCANS_BASE', '/home/ecdysis/shimsy_scans')
@@ -946,10 +1207,9 @@ def get_all_run_folders(request):
             }, status=500)
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
 
-
 @csrf_exempt
 def get_run_subfolders_info(request):
-    """Get information about subfolders in a specific run"""
+    
     if request.method == 'GET':
         try:
             scans_base = getattr(settings, 'SHIMSY_SCANS_BASE', '/home/ecdysis/shimsy_scans')
@@ -1043,10 +1303,9 @@ def get_run_subfolders_info(request):
             }, status=500)
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
 
-
 @csrf_exempt
 def get_folder_images(request):
-    """Get list of images in a specific folder for preview"""
+    
     if request.method == 'GET':
         try:
             folder_path = request.GET.get('folder_path')
@@ -1100,10 +1359,9 @@ def get_folder_images(request):
             }, status=500)
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
 
-
 @csrf_exempt
 def serve_image(request):
-    """Serve individual images for preview with optimization"""
+    
     if request.method == 'GET':
         try:
             image_path = request.GET.get('image_path')
@@ -1195,9 +1453,8 @@ def serve_image(request):
             }, status=500)
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
 
-
 def check_stitching_status(request):
-    """Check if a run has been fully stitched"""
+    
     if request.method != 'GET':
         return JsonResponse({'status': 'error', 'message': 'Only GET requests allowed'}, status=405)
     run_folder = request.GET.get('run_folder')
@@ -1250,10 +1507,9 @@ def check_stitching_status(request):
             'message': f'Error checking stitching status: {str(e)}'
         }, status=500)
 
-
 @csrf_exempt
 def get_folder_management_data(request):
-    """Get folder data for management interface"""
+    
     if request.method == 'GET':
         try:
             run_folder = request.GET.get('run_folder')
@@ -1320,14 +1576,8 @@ def get_folder_management_data(request):
             }, status=500)
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
 
-
 def parse_folder_name_for_database(folder_name):
-    """
-    Parse folder name to extract sample information for database updates
-    Examples:
-    - '1_4111-2025-Quadrat-T4_20250909_202401' -> {'site': '4111', 'sample_type': 'Quadrat', 'transect': 'T4', 'is_split': False}
-    - '1_4111-2025-Quadrat-T4_split_1_20250909_202401' -> {'site': '4111', 'sample_type': 'Quadrat', 'transect': 'T4', 'is_split': True, 'split_number': 1}
-    """
+    
     try:
         print(f"[DEBUG] Parsing folder name for database: '{folder_name}'")
         if '_' in folder_name:
@@ -1372,10 +1622,9 @@ def parse_folder_name_for_database(folder_name):
         print(f"[DEBUG] Error parsing folder name '{folder_name}': {e}")
         return None
 
-
 @csrf_exempt
 def rename_folder(request):
-    """Rename a folder"""
+    
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
@@ -1485,10 +1734,9 @@ def rename_folder(request):
             }, status=500)
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
 
-
 @csrf_exempt
 def discard_unstitched_run(request):
-    """Discard (delete) an unstitched run record"""
+    
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
@@ -1530,10 +1778,9 @@ def discard_unstitched_run(request):
             }, status=500)
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
 
-
 @csrf_exempt
 def rotate_image(request):
-    """Rotate an image file permanently on disk"""
+    
     if request.method == 'POST':
         try:
             data = json.loads(request.body)

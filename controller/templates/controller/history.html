@@ -108,7 +108,9 @@
           <th>Type</th>
           <th>Transect</th>
           <th>Run #</th>
-          <th>Retake</th>
+          <th>Shimsy-Retake</th>
+          <th>Stitcher-Rescan</th>
+          <th>Stitched</th>
           <th>Splitted</th>
         </tr>
       </thead>
@@ -122,9 +124,19 @@
           <td data-label="Type">{{ r.sample_type }}</td>
           <td data-label="Transect">{{ r.transect }}</td>
           <td data-label="Run">{{ r.run_number }}</td>
-          <td data-label="Retake">
+          <td data-label="Shimsy-Retake">
             <span class="retake-badge {{ r.retake|yesno:'retake-yes,retake-no' }}">
               {{ r.retake|yesno:"Yes,No" }}
+            </span>
+          </td>
+          <td data-label="Stitcher-Rescan">
+            <span class="retake-badge {{ r.stitcher_retake|yesno:'retake-yes,retake-no' }}">
+              {{ r.stitcher_retake|yesno:"Yes,No" }}
+            </span>
+          </td>
+          <td data-label="Stitched">
+            <span class="retake-badge {{ r.stitched|yesno:'retake-yes,retake-no' }}">
+              {{ r.stitched|yesno:"Yes,No" }}
             </span>
           </td>
           <td data-label="Splitted">

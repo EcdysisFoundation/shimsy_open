@@ -13,12 +13,12 @@ import traceback
 import shutil
 
 
-POSITION_FILE = "/home/ecdysis/shimsy/controller/last_position.json"
+POSITION_FILE = "/home/ecdysis/shimmsy/shimsy/controller/last_position.json"
 delay = 0.0005
 
-CONFIG_PATH = "/home/ecdysis/shimsy/controller/scan_config.json"
+CONFIG_PATH = "/home/ecdysis/shimmsy/shimsy/controller/scan_config.json"
 
-RUN_COUNTER_PATH = "/home/ecdysis/shimsy/controller/scan_run_counter.json"
+RUN_COUNTER_PATH = "/home/ecdysis/shimmsy/shimsy/controller/scan_run_counter.json"
 
 
 STAGING_ROOT = "/mnt/shimsy_tmp"
@@ -63,6 +63,11 @@ base_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 print(f"[DEBUG] Starting first pass with {len(sample_names)} samples")
 for dish_idx, sample in enumerate(sample_names, 1):
     print(f"[DEBUG] Processing dish {dish_idx}: {sample}")
+    
+    if sample.startswith("UnknownSample"):
+        print(f"[DEBUG] Skipping UnknownSample for dish {dish_idx}")
+        continue
+    
     if sample.startswith(f"{dish_idx}_") or sample.startswith(f"{dish_idx}-"):
         sample_key = sample.split("_", 1)[1] if "_" in sample else sample.split("-", 1)[1]
     else:
@@ -84,6 +89,11 @@ print(f"[DEBUG] First occurrences: {sample_first_occurrence}")
 print(f"[DEBUG] Starting second pass for folder creation")
 for dish_idx, sample in enumerate(sample_names, 1):
     print(f"[DEBUG] Creating folder for dish {dish_idx}: {sample}")
+    
+    if sample.startswith("UnknownSample"):
+        print(f"[DEBUG] Skipping UnknownSample folder creation for dish {dish_idx}")
+        continue
+    
     if sample.startswith(f"{dish_idx}_") or sample.startswith(f"{dish_idx}-"):
         sample_key = sample.split("_", 1)[1] if "_" in sample else sample.split("-", 1)[1]
     else:
@@ -173,7 +183,7 @@ DIR_Z  = DigitalOutputDevice(25)
 ENA    = DigitalOutputDevice(5)
 
 
-TEMPLATE_FLAG_PATH = "/home/ecdysis/shimsy/controller/template_flag.json"
+TEMPLATE_FLAG_PATH = "/home/ecdysis/shimmsy/shimsy/controller/template_flag.json"
 try:
     with open(TEMPLATE_FLAG_PATH) as f:
         template_config = json.load(f)
@@ -182,9 +192,9 @@ except Exception:
     template = "default"
 
 if template == "custom":
-    MANUAL_PATH_JSON = "/home/ecdysis/shimsy/custom_path.json"
+    MANUAL_PATH_JSON = "/home/ecdysis/shimmsy/shimsy/custom_path.json"
 else:
-    MANUAL_PATH_JSON = "/home/ecdysis/shimsy/manual_path.json"
+    MANUAL_PATH_JSON = "/home/ecdysis/shimmsy/shimsy/manual_path.json"
 
 with open(MANUAL_PATH_JSON) as f:
     path_data = json.load(f)
@@ -532,6 +542,8 @@ try:
         move_steps(DIR_Y, STEP_Y, abs(current_pos["y"]), direction=(current_pos["y"] < 0))
     if current_pos["z"] != 0:
         move_steps(DIR_Z, STEP_Z, abs(current_pos["z"]), direction=(current_pos["z"] < 0))
+    save_position(0, 0, 0)
+    print("[INFO] Position saved at origin (0, 0, 0)")
     print("[INFO] Copying labels to duplicate folders...")
     print(f"[DEBUG] sample_folder_map: {sample_folder_map}")
     for sample_name, folder_list in sample_folder_map.items():

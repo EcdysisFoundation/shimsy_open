@@ -7,6 +7,7 @@ controller/last_position.json
 controller/scan_run_counter.json
 controller/template_flag.json
 controller/current_delay.json
+controller/rescan_path_temp.json
 custom_path.json
 manual_path.json
 
@@ -62,7 +63,7 @@ Thumbs.db
 *.bak
 *.cache
 
-# Static Files (if generated)
+# Static Files
 staticfiles/
 media/
 

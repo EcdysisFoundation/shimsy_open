@@ -1,4 +1,4 @@
-
+#!/usr/bin/env python3
 import sys
 import os
 import json
@@ -9,10 +9,10 @@ from gpiozero import DigitalOutputDevice
 import subprocess
 from PIL import Image, ImageDraw, ImageFont
 
-
+# staging utilities
 from staging_utils import create_staging_dir, sync_to_network, check_staging_space
 
-
+# === GPIO Pins Setup ===
 DIR_X = DigitalOutputDevice(27)
 STEP_X = DigitalOutputDevice(17)
 DIR_Y = DigitalOutputDevice(23)
@@ -21,7 +21,7 @@ DIR_Z = DigitalOutputDevice(25)
 STEP_Z = DigitalOutputDevice(24)
 ENA = DigitalOutputDevice(5)
 
-
+# === Constants ===
 DELAY = 0.0005
 SCAN_CONFIG_PATH = "/home/ecdysis/shimsy/controller/scan_config.json"
 MANUAL_PATH = "/home/ecdysis/shimsy/manual_path.json"
@@ -67,17 +67,18 @@ def create_label_image(sample_name, path, width=800, height=600):
             parts_with_prefix = sample_name.split("_", 1)
             if len(parts_with_prefix) == 2 and parts_with_prefix[0].isdigit():
                 clean_sample_name = parts_with_prefix[1]
+        
         parts = clean_sample_name.split("-")
         if len(parts) == 4:
             site = parts[0]
-            year = "2025"
+            year = "2026"
             sample_type = parts[2].replace("Trap", " Trap").replace("Sweep", " Sweep").title()
             transect = parts[3]
         else:
             raise ValueError("Invalid format")
     except Exception:
         site = "Unknown"
-        year = "2025"
+        year = "2026"
         sample_type = "Unknown"
         transect = "T?"
 
@@ -132,6 +133,7 @@ def main():
         print(f"[ERROR] No capture points found for sample {sample_number}")
         return
 
+    # Find the last run path from LAST_SCAN.txt
     LAST_SCAN_PATH = "/home/ecdysis/shimsy_scans/LAST_SCAN.txt"
     try:
         with open(LAST_SCAN_PATH, "r") as f:
@@ -158,9 +160,11 @@ def main():
     if candidates:
         main_folder = candidates[-1]
         main_folder_name = os.path.basename(main_folder)
+        
         base_name = main_folder_name.rsplit("_", 2)[0]
         sub_ts = datetime.now().strftime("%Y%m%d_%H%M%S")
         retake_folder_name = f"{base_name}_{sub_ts}"
+        
         print(f"[DEBUG] Found main folder: {main_folder_name}")
         print(f"[DEBUG] Base name (with split): {base_name}")
         print(f"[DEBUG] Retake folder name: {retake_folder_name}")
@@ -175,7 +179,9 @@ def main():
         os.makedirs(main_folder, exist_ok=True)
 
     staging_path, use_staging = create_staging_dir("retake")
+    
     final_output_folder = os.path.join(main_folder, retake_folder_name)
+    
     temp_output_folder = os.path.join(staging_path, retake_folder_name)
     os.makedirs(temp_output_folder, exist_ok=True)
 
@@ -204,6 +210,7 @@ def main():
                 filename = f"label_r_{str(image_idx).zfill(3)}.jpg"
             else:
                 filename = f"image_r_{str(image_idx).zfill(3)}.jpg"
+            
             if capture_image(temp_output_folder, filename):
                 print(f"[*] Captured {filename}")
             else:
