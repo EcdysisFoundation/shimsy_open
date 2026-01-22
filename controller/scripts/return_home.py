@@ -17,7 +17,11 @@ ENA    = DigitalOutputDevice(5)
 
 
 DELAY = 0.0005
-POSITION_FILE = "/home/ecdysis/shimsy/controller/last_position.json"
+POSITION_FILE = "/home/ecdysis/shimmsy/shimsy/controller/last_position.json"
+
+def save_position(x, y, z):
+    with open(POSITION_FILE, "w") as f:
+        json.dump({"x": x, "y": y, "z": z}, f)
 
 def move_steps(dir_pin, step_pin, steps, direction=True):
     dir_pin.value = direction
@@ -49,7 +53,9 @@ def main():
     if z != 0:
         move_steps(DIR_Z, STEP_Z, abs(z), direction=(z < 0))
 
+    save_position(0, 0, 0)
     print("[INFO] Returned to origin (0, 0, 0)")
+    print("[INFO] Position saved at origin (0, 0, 0)")
 
     ENA.on()
 
