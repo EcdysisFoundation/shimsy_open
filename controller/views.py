@@ -1,4 +1,6 @@
 from .models import ScanSettings, ScanConfiguration, ScanRecord, UnstitchedRun, RescanRequest
+from .utils import convert_sample_type_abbrev_to_full
+
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -143,6 +145,10 @@ def run_full_scan(request):
 
             if success:
                 print(f"[DEBUG] Scan successful, creating records for run {run_number}")
+                rescan_request_keys = set(
+                    (req.site_number, req.sample_type, req.transect)
+                    for req in RescanRequest.objects.all()
+                )
                 sample_occurrence_count = {}
                 for sample in sample_names_ordered:
                     if "_" in sample:
@@ -166,11 +172,13 @@ def run_full_scan(request):
                         continue
 
                     site = site[:4]
+                    sample_type_full = convert_sample_type_abbrev_to_full(sample_type)
+                    is_stitcher_retake = (site, sample_type_full, transect) in rescan_request_keys
 
                     name = payload.get("name", "Unknown")
                     name2 = payload.get("name2", "")
                     is_splitted = sample_occurrence_count.get(core, 1) > 1
-                    print(f"[DEBUG] Creating record: name={name}, site={site}, type={sample_type}, transect={transect}, run={run_number}, is_splitted={is_splitted}")
+                    print(f"[DEBUG] Creating record: name={name}, site={site}, type={sample_type}, transect={transect}, run={run_number}, is_splitted={is_splitted}, stitcher_retake={is_stitcher_retake}")
                     record = ScanRecord.objects.create(
                         name=name,
                         name2=name2,
@@ -179,6 +187,7 @@ def run_full_scan(request):
                         transect=transect,
                         run_number=run_number,
                         is_splitted=is_splitted,
+                        stitcher_retake=is_stitcher_retake,
                     )
                     print(f"[DEBUG] Created record ID: {record.id}")
                 run_folder = f"run_{run_number:03d}"
