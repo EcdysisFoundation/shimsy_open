@@ -605,6 +605,40 @@ function handleConfirmClick(e) {
   confirmStitching();
 }
 
+const REQUIRED_IMAGE_COUNT = 14;
+
+function getSelectedFoldersForValidation() {
+  const selected = [];
+  const allSubfolders = window.modalSubfolders || [];
+  const totalItems = window.totalSelectableItems || 0;
+  for (let i = 0; i < totalItems; i++) {
+    const checkbox = document.getElementById(`folder-checkbox-${i}`);
+    if (!checkbox || !checkbox.checked) continue;
+    const folderType = checkbox.getAttribute('data-folder-type');
+    const parentIndex = parseInt(checkbox.getAttribute('data-parent-index'), 10);
+    const nestedIndex = parseInt(checkbox.getAttribute('data-nested-index'), 10);
+    if (folderType === 'main') {
+      const subfolder = allSubfolders[parentIndex];
+      if (subfolder) {
+        selected.push({
+          displayName: subfolder.name,
+          image_count: subfolder.image_count != null ? subfolder.image_count : 0
+        });
+      }
+    } else if (folderType === 'nested') {
+      const parentFolder = allSubfolders[parentIndex];
+      const nestedFolder = parentFolder && parentFolder.nested_folders && parentFolder.nested_folders[nestedIndex];
+      if (nestedFolder) {
+        selected.push({
+          displayName: `${parentFolder.name} > ${nestedFolder.name}`,
+          image_count: nestedFolder.image_count != null ? nestedFolder.image_count : 0
+        });
+      }
+    }
+  }
+  return selected;
+}
+
 async function confirmStitching() {
  console.log('confirmStitching() called');
  console.log('Debug before closing modal:');
@@ -619,6 +653,16 @@ async function confirmStitching() {
   if (typeof window.totalSelectableItems === 'undefined') {
  console.error(' No totalSelectableItems! Cannot proceed with stitching.');
     alert('Error: Modal data not properly loaded. Please try clicking "Stitch Images" again.');
+    return;
+  }
+  const selectedForValidation = getSelectedFoldersForValidation();
+  if (selectedForValidation.length === 0) {
+    alert('Please select at least one folder to upload.');
+    return;
+  }
+  const shortFall = selectedForValidation.filter(function (f) { return f.image_count < REQUIRED_IMAGE_COUNT; });
+  if (shortFall.length > 0) {
+    showFourteenImagesRequiredModal();
     return;
   }
   const selectedRun = document.getElementById('run-folder-select').value;
@@ -1080,6 +1124,136 @@ function showUncheckConfirmation(callback) {
   }
 }
 
+function showFourteenImagesRequiredModal() {
+  const overlay = document.createElement('div');
+  overlay.id = 'fourteen-images-required-overlay';
+  overlay.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+  `;
+  const modalContent = document.createElement('div');
+  modalContent.style.cssText = `
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(20px);
+    border-radius: 24px;
+    padding: 40px;
+    max-width: 500px;
+    width: 90%;
+    box-shadow:
+      0 20px 60px rgba(0, 0, 0, 0.3),
+      0 8px 32px rgba(74, 124, 89, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    transform: scale(0.9) translateY(20px);
+    transition: all 0.3s ease;
+    text-align: center;
+  `;
+  modalContent.innerHTML = `
+    <div style="
+      font-size: 64px;
+      font-weight: 900;
+      margin-bottom: 20px;
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #ffc107, #e0a800);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+      box-shadow: 0 8px 25px rgba(255, 193, 7, 0.3);
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    ">!</div>
+    <h2 style="
+      font-size: 24px;
+      font-weight: 700;
+      color: #2c3e50;
+      margin-bottom: 15px;
+      background: linear-gradient(135deg, #2d5016, #4a7c59);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    ">14 images required</h2>
+    <div style="
+      font-size: 16px;
+      color: #34495e;
+      line-height: 1.6;
+      margin-bottom: 30px;
+      padding: 20px;
+      background: linear-gradient(135deg, #f8f9ff, #e3e8ef);
+      border-radius: 12px;
+      border-left: 4px solid #4a7c59;
+    ">
+      <strong>One or more selected folders do not have the required images.</strong> Each folder must contain at least 14 images before stitching. Please double check and Preview the images before Stitching.
+    </div>
+    <div style="display: flex; gap: 15px; justify-content: center;">
+      <button id="fourteen-images-ok-btn" style="
+        padding: 14px 30px;
+        font-size: 16px;
+        font-weight: 600;
+        border: none;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        min-width: 120px;
+        background: linear-gradient(135deg, #4a7c59, #2d5016);
+        color: white;
+        box-shadow: 0 4px 15px rgba(74, 124, 89, 0.3);
+      ">OK</button>
+    </div>
+  `;
+  overlay.appendChild(modalContent);
+  document.body.appendChild(overlay);
+  setTimeout(() => {
+    overlay.style.opacity = '1';
+    overlay.style.visibility = 'visible';
+    modalContent.style.transform = 'scale(1) translateY(0)';
+  }, 50);
+  function closeModal() {
+    overlay.style.opacity = '0';
+    overlay.style.visibility = 'hidden';
+    setTimeout(() => {
+      if (overlay.parentNode) {
+        overlay.parentNode.removeChild(overlay);
+      }
+    }, 300);
+    document.removeEventListener('keydown', escapeHandler);
+    overlay.removeEventListener('click', overlayClickHandler);
+  }
+  function overlayClickHandler(e) {
+    if (e.target === overlay) {
+      closeModal();
+      return;
+    }
+    if (e.target.id === 'fourteen-images-ok-btn' || e.target.closest('#fourteen-images-ok-btn')) {
+      e.preventDefault();
+      e.stopPropagation();
+      closeModal();
+    }
+  }
+  overlay.addEventListener('click', overlayClickHandler);
+  const escapeHandler = (e) => {
+    if (e.key === 'Escape') {
+      closeModal();
+    }
+  };
+  document.addEventListener('keydown', escapeHandler);
+}
+
 async function startStitchingProcess() {
   if (stitchingInProgress) {
  console.log('Stitching already in progress, ignoring duplicate call');
@@ -1177,6 +1351,15 @@ async function startStitchingProcess() {
   if (selectedFolders.length > 6) {
  console.warn(' Too many folders selected:', selectedFolders.length);
     alert('Maximum of 6 folders can be selected for stitching. Please deselect some folders.');
+    return;
+  }
+  const withTooFewImages = selectedFolders.filter(function (f) {
+    const count = f.image_count != null ? f.image_count : 0;
+    return count < REQUIRED_IMAGE_COUNT;
+  });
+  if (withTooFewImages.length > 0) {
+ console.warn(' One or more selected folders have fewer than 14 images');
+    showFourteenImagesRequiredModal();
     return;
   }
  console.log('Proceeding with', selectedFolders.length, 'selected folders');
