@@ -1713,6 +1713,37 @@ async function loadFolderImages(folderKey) {
   }
 }
 
+function buildImageCard(image, globalIndex, hideInfo) {
+  hideInfo = hideInfo || false;
+  const infoBlock = hideInfo ? '' : `
+        <div class="image-info">
+          <div class="image-name">${image.name}</div>
+          <div class="image-details">
+            <span>${formatFileSize(image.size)}</span>
+            <span>${image.is_label ? 'Label' : 'Image'}</span>
+          </div>
+        </div>`;
+  return `
+      <div class="image-card"
+           onclick="openImageViewer(${globalIndex})"
+           onmouseenter="preloadFullSizeOnHover('${image.path.replace(/'/g, "\\'")}')">
+        ${image.is_label && !hideInfo ? '<div class="label-badge">Label</div>' : ''}
+        <div class="image-container">
+          <img class="image-preview lazy-load"
+               data-src="/serve-image/?image_path=${encodeURIComponent(image.path)}"
+               data-index="${globalIndex}"
+               alt="${image.name}"
+               loading="lazy">
+          <div class="image-placeholder">
+            <div class="spinner"></div>
+            <div class="loading-text">Loading...</div>
+          </div>
+        </div>
+        ${infoBlock}
+      </div>
+    `;
+}
+
 function displayImages(images, folderName) {
   const imageGrid = document.getElementById('image-grid');
   currentFolderImages = images;
@@ -1728,8 +1759,43 @@ function displayImages(images, folderName) {
     `;
     return;
   }
+  var labelNames = ['label_auto_000.jpg', 'label_r_001.jpg'];
+  var labelImages = images.filter(function (img) { return labelNames.indexOf(img.name) !== -1; });
+  var dishImages = images.filter(function (img) { return labelNames.indexOf(img.name) === -1; }).slice(0, 12);
+  if (labelImages.length > 0 || dishImages.length > 0) {
+    displayTrayLayout(images, labelImages, dishImages);
+    return;
+  }
   displayImagePage(images, 1, folderName);
 }
+
+function displayTrayLayout(allImages, labelImages, dishImages) {
+  const imageGrid = document.getElementById('image-grid');
+  var labelsHTML = '';
+  if (labelImages.length > 0) {
+    labelsHTML = '<div class="preview-labels">' + labelImages.map(function (img) {
+      var globalIndex = allImages.indexOf(img);
+      return buildImageCard(img, globalIndex, false);
+    }).join('') + '</div>';
+  }
+  var trayHTML = '';
+  if (dishImages.length > 0) {
+    var dishCards = dishImages.map(function (img) {
+      var globalIndex = allImages.indexOf(img);
+      return buildImageCard(img, globalIndex, true);
+    }).join('');
+    trayHTML = '<div class="preview-tray"><div class="tray-dish-grid">' + dishCards + '</div></div>';
+  }
+  imageGrid.innerHTML = '<div class="preview-tray-layout">' + labelsHTML + trayHTML + '</div>';
+  initializeLazyLoading();
+  var trayImgs = imageGrid.querySelectorAll('.tray-dish-grid .lazy-load');
+  for (var i = 0; i < trayImgs.length; i++) {
+    loadLazyImage(trayImgs[i]);
+  }
+  var toPreload = labelImages.concat(dishImages).slice(0, PRELOAD_BATCH_SIZE).map(function (img) { return img.path; });
+  preloadImages(toPreload, MAX_CONCURRENT_LOADS, THUMBNAIL_SIZE, 75);
+}
+
 function displayImagePage(images, page, folderName) {
   const imageGrid = document.getElementById('image-grid');
   const startIndex = (page - 1) * IMAGES_PER_PAGE;
@@ -1738,31 +1804,7 @@ function displayImagePage(images, page, folderName) {
  console.log(`Displaying page ${page}/${totalPages}: images ${startIndex + 1}-${endIndex} of ${images.length}`);
   const imageCards = pageImages.map((image, localIndex) => {
     const globalIndex = startIndex + localIndex;
-    return `
-      <div class="image-card"
-           onclick="openImageViewer(${globalIndex})"
-           onmouseenter="preloadFullSizeOnHover('${image.path.replace(/'/g, "\\'")}')">
-        ${image.is_label ? '<div class="label-badge">Label</div>' : ''}
-        <div class="image-container">
-          <img class="image-preview lazy-load"
-               data-src="/serve-image/?image_path=${encodeURIComponent(image.path)}"
-               data-index="${globalIndex}"
-               alt="${image.name}"
-               loading="lazy">
-          <div class="image-placeholder">
-            <div class="spinner"></div>
-            <div class="loading-text">Loading...</div>
-          </div>
-        </div>
-        <div class="image-info">
-          <div class="image-name">${image.name}</div>
-          <div class="image-details">
-            <span>${formatFileSize(image.size)}</span>
-            <span>${image.is_label ? 'Label' : 'Image'}</span>
-          </div>
-        </div>
-      </div>
-    `;
+    return buildImageCard(image, globalIndex, false);
   }).join('');
   let paginationHTML = '';
   if (totalPages > 1) {
