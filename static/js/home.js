@@ -244,6 +244,7 @@ async function loadLazyImage(img) {
     const cacheKey = `${dataSrc}_${size}_${quality}`;
     const cached = imageCache.get(cacheKey);
     if (cached && (Date.now() - cached.timestamp) < IMAGE_CACHE_EXPIRY) {
+      setThumbnailAspectRatioOnLoad(img);
       img.src = cached.url;
       img.classList.add('loaded');
       hidePlaceholder(img);
@@ -251,6 +252,7 @@ async function loadLazyImage(img) {
     }
     const imgElement = new Image();
     imgElement.onload = () => {
+      setThumbnailAspectRatioOnLoad(img);
       img.src = optimizedSrc;
       img.classList.add('loaded');
       hidePlaceholder(img);
@@ -270,6 +272,19 @@ async function loadLazyImage(img) {
     showImageError(img);
   }
 }
+function setThumbnailAspectRatioOnLoad(img) {
+  if (!img.classList.contains('image-preview')) return;
+  img.onload = function () {
+    const w = this.naturalWidth;
+    const h = this.naturalHeight;
+    if (!w || !h) return;
+    const container = this.closest('.image-container');
+    const card = this.closest('.image-card');
+    if (container) container.style.aspectRatio = w + ' / ' + h;
+    if (card && card.closest('.tray-dish-grid')) card.style.aspectRatio = w + ' / ' + h;
+  };
+}
+
 function hidePlaceholder(img) {
   const placeholder = img.nextElementSibling;
   if (placeholder && placeholder.classList.contains('image-placeholder')) {
