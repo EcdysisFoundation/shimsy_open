@@ -1,6 +1,6 @@
 # Shimsy
 
-Django app for the Shimsy scanner: web UI and run control on a Raspberry Pi, with scan images stored on the Ecdysis server (mounted on the Pi).
+Django app for the Shimsy scanner: web UI and run control on a Raspberry Pi, with scan images stored on the Ecdysis01 server (mounted on the Pi).
 
 ---
 
@@ -28,7 +28,7 @@ Then open the UI at `http://<pi-ip>:8000`. Allowed hosts are set in `cnccontroll
 
 ## Where scan images are stored
 
-Scans are written to **shimsy_scans**. On the Ecdysis server that directory lives under `/srv/shimsy/shimsy_scans`:
+Scans are written to **shimsy_scans**. On the Ecdysis01 server that directory lives under `/srv/shimsy/shimsy_scans`:
 
 On the Raspberry Pi, that same tree is **mounted via NFS** so the app can read and write it locally:
 
@@ -36,7 +36,7 @@ On the Raspberry Pi, that same tree is **mounted via NFS** so the app can read a
   `/home/ecdysis/shimsy_scans`  
   This is the path used in settings (`SHIMSY_SCANS_BASE` in `cnccontroller/settings.py`) and by the controller scripts. The NAS export used for the mount is `192.168.2.212:/pool1/srv/shimsy/shimsy_scans`. The `nas_utils` module can check and remount this if needed.
 
-So: **physical storage is on the Ecdysis server** at `/srv/shimsy/shimsy_scans`; the Pi sees it at `/home/ecdysis/shimsy_scans`.
+So: **physical storage is on the Ecdysis01 server** at `/srv/shimsy/shimsy_scans`; the Pi sees it at `/home/ecdysis/shimsy_scans`.
 
 ---
 
