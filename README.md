@@ -12,7 +12,7 @@ Clone the repo and use a virtual environment. From the repo root:
 cd shimsy
 python3 -m venv venv
 source venv/bin/activate
-pip install django gpiozero Pillow
+pip install django gpiozero Pillow requests
 ```
 
 Run the server from the inner `shimsy` directory (where `manage.py` lives). **Use `sudo`** so the process can access GPIO and any device files used by the scanner:
