@@ -59,7 +59,7 @@ cp shimsy_local.example.json shimsy_local.json
 | `nas_export` | NFS export path |
 | `repo_home` | Absolute path to this clone on the device |
 
-`shimsy_local.json` is listed in `.gitignore` — **never commit it**.
+`shimsy_local.json` is listed in `.gitignore` — **do not commit it**.
 
 Environment variables can override JSON values; see `shimsy_secrets.py` (`DJANGO_SECRET_KEY`, `SHIMSY_SCANS_BASE`, `STITCHER_URL`, `NAS_IP`, `DJANGO_ALLOWED_HOSTS`, etc.).
 
