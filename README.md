@@ -58,7 +58,7 @@ From the repo root:
 ```bash
 python3 -m venv venv
 source venv/bin/activate
-pip install django gpiozero Pillow requests
+pip install -r requirements.txt
 ```
 
 ### 3. Database

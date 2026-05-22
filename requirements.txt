@@ -1,0 +1,8 @@
+# Python dependencies for Shimsy (Raspberry Pi / Django app).
+# Install: pip install -r requirements.txt
+# gpiozero pulls RPi.GPIO on Raspberry Pi OS.
+
+Django>=5.2,<6
+gpiozero>=2.0
+Pillow>=11
+requests>=2.32
