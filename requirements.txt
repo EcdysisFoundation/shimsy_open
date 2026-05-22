@@ -4,5 +4,6 @@
 
 Django>=5.2,<6
 gpiozero>=2.0
+lgpio>=0.2
 Pillow>=11
 requests>=2.32
