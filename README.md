@@ -134,12 +134,6 @@ The application writes state under `controller/` and `db.sqlite3` at the repo ro
 
 ---
 
-## Contributing
-
-This repository is the **public** open-source copy. Development may occur in a private fork; contributions via pull requests to `shimsy_open` are welcome when that process is enabled by the maintainers.
-
----
-
 ## Troubleshooting
 
 | Issue | What to check |
