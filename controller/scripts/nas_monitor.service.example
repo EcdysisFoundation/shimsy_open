@@ -1,0 +1,27 @@
+[Unit]
+Description=Shimsy NAS Monitor and Auto-Mount Service
+After=network-online.target
+Wants=network-online.target
+StartLimitBurst=5
+StartLimitIntervalSec=300
+
+[Service]
+Type=simple
+User=YOUR_LINUX_USER
+Group=YOUR_LINUX_USER
+ExecStart=/usr/bin/python3 YOUR_REPO_HOME/controller/scripts/nas_monitor.py
+Restart=always
+RestartSec=30
+Environment=PYTHONPATH=YOUR_REPO_HOME/controller/scripts
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=shimsy-nas-monitor
+
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=YOUR_REPO_HOME YOUR_SHIMSY_SCANS_MOUNT YOUR_SHIMSY_TEMP_DIR
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

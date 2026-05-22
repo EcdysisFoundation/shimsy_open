@@ -25,11 +25,18 @@ ENA = DigitalOutputDevice(5)
 _SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 _CONTROLLER_DIR = os.path.dirname(_SCRIPT_DIR)
 _APP_ROOT = os.path.dirname(_CONTROLLER_DIR)
+if _APP_ROOT not in sys.path:
+    sys.path.insert(0, _APP_ROOT)
 
+from shimsy_secrets import get_config
+
+_cfg = get_config()
 DELAY = 0.0005
 SCAN_CONFIG_PATH = os.path.join(_CONTROLLER_DIR, "scan_config.json")
 MANUAL_PATH = os.path.join(_APP_ROOT, "manual_path.json")
-MEDIA_ROOT = os.environ.get("SHIMSY_SCANS_BASE", "/home/ecdysis/shimsy_scans")
+MEDIA_ROOT = _cfg.get("shimsy_scans_base") or os.environ.get("SHIMSY_SCANS_BASE", "")
+if not MEDIA_ROOT:
+    MEDIA_ROOT = os.path.join(_APP_ROOT, "shimsy_scans")
 
 def move_axis(dir_pin, step_pin, steps, direction=True):
     dir_pin.value = direction

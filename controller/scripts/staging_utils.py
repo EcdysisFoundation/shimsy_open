@@ -5,16 +5,26 @@ Provides common functions for RAM-based staging and network synchronization
 """
 
 import os
+import sys
 import shutil
 import subprocess
 import tempfile
 from datetime import datetime
 
+_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+_APP_ROOT = os.path.dirname(os.path.dirname(_SCRIPT_DIR))
+if _APP_ROOT not in sys.path:
+    sys.path.insert(0, _APP_ROOT)
 
+from shimsy_secrets import get_config
 
-FINAL_ROOT = os.environ.get("SHIMSY_SCANS_BASE", "/home/ecdysis/shimsy_scans")
+_cfg = get_config()
+FINAL_ROOT = _cfg.get("shimsy_scans_base") or os.environ.get("SHIMSY_SCANS_BASE", "")
+if not FINAL_ROOT:
+    FINAL_ROOT = os.path.join(_APP_ROOT, "shimsy_scans")
+_staging_cfg = _cfg.get("shimsy_staging") or os.environ.get("SHIMSY_STAGING", "")
 _STAGING_DEFAULT = "/mnt/shimsy_tmp"
-STAGING_ROOT = os.environ.get("SHIMSY_STAGING") or (
+STAGING_ROOT = _staging_cfg or (
     _STAGING_DEFAULT if os.path.exists(_STAGING_DEFAULT) else os.path.join(FINAL_ROOT, ".staging")
 )
 

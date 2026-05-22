@@ -4,6 +4,13 @@ import signal
 import sys
 import os
 from datetime import datetime
+
+_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+_APP_ROOT = os.path.dirname(os.path.dirname(_SCRIPT_DIR))
+if _APP_ROOT not in sys.path:
+    sys.path.insert(0, _APP_ROOT)
+
+from shimsy_secrets import get_config
 from nas_utils import NASManager, NASError
 
 
@@ -83,7 +90,9 @@ class NASMonitor:
                         f"ALERT: NAS has been unavailable for {time_since_success} "
                         f"({self.consecutive_failures} consecutive failures)"
                     )
-                    alert_file = "/home/ecdysis/shimsy/controller/nas_alert.flag"
+                    alert_file = os.path.join(
+                        get_config()["repo_home"], "controller", "nas_alert.flag"
+                    )
                     try:
                         with open(alert_file, 'w') as f:
                             f.write(f"NAS_UNAVAILABLE_SINCE={self.last_successful_check.isoformat()}\n")
@@ -92,7 +101,9 @@ class NASMonitor:
                     except Exception as e:
                         logger.error(f"Failed to write alert file: {e}")
                 else:
-                    alert_file = "/home/ecdysis/shimsy/controller/nas_alert.flag"
+                    alert_file = os.path.join(
+                        get_config()["repo_home"], "controller", "nas_alert.flag"
+                    )
                     if os.path.exists(alert_file):
                         try:
                             os.remove(alert_file)

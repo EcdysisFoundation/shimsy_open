@@ -11,9 +11,16 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 import os
+import sys
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+if str(BASE_DIR) not in sys.path:
+    sys.path.insert(0, str(BASE_DIR))
+
+from shimsy_secrets import get_config
+
+_local = get_config()
 
 CONTROLLER_DIR = BASE_DIR / "controller"
 
@@ -25,11 +32,11 @@ STATICFILES_DIRS = [
 MEDIA_ROOT = "/app/media/"
 MEDIA_URL = "/media/"
   
-SECRET_KEY = 'django-insecure-))m7wk)*--m_=914mg^$87ma%(wtjk7fm7pp%3wi^6da-y%1^%'
+SECRET_KEY = _local["django_secret_key"]
 
-DEBUG = True
+DEBUG = bool(_local.get("debug", True))
 
-ALLOWED_HOSTS = ["10.147.19.2",'192.168.2.59', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = list(_local.get("allowed_hosts") or ["localhost", "127.0.0.1"])
 
 
 INSTALLED_APPS = [
@@ -64,6 +71,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'controller.context_processors.shimsy_frontend',
             ],
         },
     },
@@ -109,10 +117,16 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-STITCHER_URL = 'http://ecdysis01.local:8090'
-STITCHER_JS_URL_ZEROTIER = 'http://10.147.19.124:8090'
-STITCHER_JS_URL = 'http://ecdysis01.local:8090'
+STITCHER_URL = _local.get("stitcher_url") or ""
+STITCHER_JS_URL = _local.get("stitcher_js_url") or ""
+STITCHER_JS_URL_ZEROTIER = STITCHER_JS_URL
+STITCHER_FORM_URL_BASE = (_local.get("stitcher_form_url_base") or "").rstrip("/")
 ERROR_MSG_KEY = 'ERROR'
 
-# Shimsy Scans Dir (override with SHIMSY_SCANS_BASE env for test/second device)
-SHIMSY_SCANS_BASE = os.environ.get("SHIMSY_SCANS_BASE", "/home/ecdysis/shimsy_scans")
+_scans_base = _local.get("shimsy_scans_base") or os.environ.get("SHIMSY_SCANS_BASE", "")
+SHIMSY_SCANS_BASE = _scans_base or str(BASE_DIR / "shimsy_scans")
+SHIMSY_STAGING = _local.get("shimsy_staging") or os.environ.get("SHIMSY_STAGING", "")
+SHIMSY_TEMP_BASE = _local.get("shimsy_temp_base") or ""
+SHIMSY_REPO_HOME = _local.get("repo_home") or str(BASE_DIR)
+NAS_IP = _local.get("nas_ip") or ""
+NAS_EXPORT = _local.get("nas_export") or "/pool1/srv/shimsy/shimsy_scans"

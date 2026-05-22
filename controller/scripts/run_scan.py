@@ -15,16 +15,24 @@ import shutil
 _SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 _CONTROLLER_DIR = os.path.dirname(_SCRIPT_DIR)
 _APP_ROOT = os.path.dirname(_CONTROLLER_DIR)
+if _APP_ROOT not in sys.path:
+    sys.path.insert(0, _APP_ROOT)
 
+from shimsy_secrets import get_config
+
+_cfg = get_config()
 POSITION_FILE = os.path.join(_CONTROLLER_DIR, "last_position.json")
 delay = 0.0005
 
 CONFIG_PATH = os.path.join(_CONTROLLER_DIR, "scan_config.json")
 RUN_COUNTER_PATH = os.path.join(_CONTROLLER_DIR, "scan_run_counter.json")
 
-FINAL_ROOT = os.environ.get("SHIMSY_SCANS_BASE", "/home/ecdysis/shimsy_scans")
+FINAL_ROOT = _cfg.get("shimsy_scans_base") or os.environ.get("SHIMSY_SCANS_BASE", "")
+if not FINAL_ROOT:
+    FINAL_ROOT = os.path.join(_APP_ROOT, "shimsy_scans")
+_staging_cfg = _cfg.get("shimsy_staging") or os.environ.get("SHIMSY_STAGING", "")
 _STAGING_DEFAULT = "/mnt/shimsy_tmp"
-STAGING_ROOT = os.environ.get("SHIMSY_STAGING") or (
+STAGING_ROOT = _staging_cfg or (
     _STAGING_DEFAULT if os.path.exists(_STAGING_DEFAULT) else os.path.join(FINAL_ROOT, ".staging")
 )
 

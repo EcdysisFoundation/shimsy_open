@@ -77,3 +77,6 @@ media/
 *.pot
 *.pyc
 local_settings.py
+
+# Machine-local secrets (IPs, API URLs, paths) — copy from shimsy_local.example.json
+shimsy_local.json

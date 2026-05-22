@@ -1,0 +1,19 @@
+{
+  "django_secret_key": "generate-a-unique-secret-key-here",
+  "allowed_hosts": [
+    "localhost",
+    "127.0.0.1",
+    "YOUR_PI_LAN_IP",
+    "YOUR_PI_ZEROTIER_IP"
+  ],
+  "debug": true,
+  "stitcher_url": "http://your-stitcher-host:8090",
+  "stitcher_js_url": "http://your-stitcher-host:8090",
+  "stitcher_form_url_base": "http://your-stitcher-ui-host:3000/core/stitcher-form",
+  "shimsy_scans_base": "/home/YOUR_USER/shimsy_scans",
+  "shimsy_staging": "/mnt/shimsy_tmp",
+  "shimsy_temp_base": "/home/YOUR_USER/shimsy_temp",
+  "nas_ip": "YOUR_NAS_LAN_IP",
+  "nas_export": "/pool1/srv/shimsy/shimsy_scans",
+  "repo_home": "/home/YOUR_USER/shimsy"
+}

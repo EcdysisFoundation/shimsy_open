@@ -195,7 +195,7 @@ def run_full_scan(request):
                     )
                     print(f"[DEBUG] Created record ID: {record.id}")
                 run_folder = f"run_{run_number:03d}"
-                scans_base = getattr(settings, 'SHIMSY_SCANS_BASE', '/home/ecdysis/shimsy_scans')
+                scans_base = settings.SHIMSY_SCANS_BASE
                 run_path = os.path.join(scans_base, run_folder)
                 try:
                     total_stitchable = get_all_stitchable_folders(run_path)
@@ -410,7 +410,7 @@ def create_run_folder_zip(run_folder_path, output_zip_path):
 
 def get_latest_run_folder():
     
-    scans_base = getattr(settings, 'SHIMSY_SCANS_BASE', '/home/ecdysis/shimsy_scans')
+    scans_base = settings.SHIMSY_SCANS_BASE
     if not os.path.exists(scans_base):
         print(f"[DEBUG] Scans base directory does not exist: {scans_base}")
         local_test_path = os.path.join(settings.BASE_DIR, 'test_shimsy_scans')
@@ -704,7 +704,7 @@ def upload_latest_run_to_stitcher(request):
                     'status': 'error',
                     'message': 'Confidence threshold must be between 0.1 and 0.9'
                 }, status=400)
-            scans_base = getattr(settings, 'SHIMSY_SCANS_BASE', '/home/ecdysis/shimsy_scans')
+            scans_base = settings.SHIMSY_SCANS_BASE
             if not os.path.exists(scans_base):
                 print(f"[DEBUG] Scans base not found: {scans_base}")
                 local_test_path = os.path.join(settings.BASE_DIR, 'test_shimsy_scans')
@@ -1174,7 +1174,7 @@ def get_all_run_folders(request):
     
     if request.method == 'GET':
         try:
-            scans_base = getattr(settings, 'SHIMSY_SCANS_BASE', '/home/ecdysis/shimsy_scans')
+            scans_base = settings.SHIMSY_SCANS_BASE
             if not os.path.exists(scans_base):
                 print(f"[DEBUG] Scans base not found: {scans_base}")
                 local_test_path = os.path.join(settings.BASE_DIR, 'test_shimsy_scans')
@@ -1223,7 +1223,7 @@ def get_run_subfolders_info(request):
     
     if request.method == 'GET':
         try:
-            scans_base = getattr(settings, 'SHIMSY_SCANS_BASE', '/home/ecdysis/shimsy_scans')
+            scans_base = settings.SHIMSY_SCANS_BASE
             if not os.path.exists(scans_base):
                 print(f"[DEBUG] Scans base not found: {scans_base}")
                 local_test_path = os.path.join(settings.BASE_DIR, 'test_shimsy_scans')
@@ -1325,7 +1325,7 @@ def get_folder_images(request):
                     'status': 'error',
                     'message': 'folder_path parameter is required'
                 }, status=400)
-            scans_base = getattr(settings, 'SHIMSY_SCANS_BASE', '/home/ecdysis/shimsy_scans')
+            scans_base = settings.SHIMSY_SCANS_BASE
             if not folder_path.startswith(scans_base):
                 return JsonResponse({
                     'status': 'error',
@@ -1383,7 +1383,7 @@ def serve_image(request):
                     'status': 'error',
                     'message': 'image_path parameter is required'
                 }, status=400)
-            scans_base = getattr(settings, 'SHIMSY_SCANS_BASE', '/home/ecdysis/shimsy_scans')
+            scans_base = settings.SHIMSY_SCANS_BASE
             if not image_path.startswith(scans_base):
                 return JsonResponse({
                     'status': 'error',
@@ -1473,7 +1473,7 @@ def check_stitching_status(request):
         return JsonResponse({'status': 'error', 'message': 'run_folder parameter required'}, status=400)
     try:
         unstitched_run = UnstitchedRun.objects.get(run_folder=run_folder)
-        scans_base = getattr(settings, 'SHIMSY_SCANS_BASE', '/home/ecdysis/shimsy_scans')
+        scans_base = settings.SHIMSY_SCANS_BASE
         run_path = os.path.join(scans_base, run_folder)
         total_subfolders = 0
         if os.path.exists(run_path):
@@ -1492,7 +1492,7 @@ def check_stitching_status(request):
             'last_updated': unstitched_run.last_updated.isoformat() if unstitched_run.last_updated else None
         })
     except UnstitchedRun.DoesNotExist:
-        scans_base = getattr(settings, 'SHIMSY_SCANS_BASE', '/home/ecdysis/shimsy_scans')
+        scans_base = settings.SHIMSY_SCANS_BASE
         run_path = os.path.join(scans_base, run_folder)
         if os.path.exists(run_path):
             total_subfolders = len([f for f in os.scandir(run_path) if f.is_dir()])
@@ -1529,7 +1529,7 @@ def get_folder_management_data(request):
                     'status': 'error',
                     'message': 'run_folder parameter is required'
                 }, status=400)
-            scans_base = getattr(settings, 'SHIMSY_SCANS_BASE', '/home/ecdysis/shimsy_scans')
+            scans_base = settings.SHIMSY_SCANS_BASE
             if not os.path.exists(scans_base):
                 local_test_path = os.path.join(settings.BASE_DIR, 'test_shimsy_scans')
                 if os.path.exists(local_test_path):
@@ -1802,7 +1802,7 @@ def rotate_image(request):
                     'status': 'error',
                     'message': 'image_path parameter is required'
                 }, status=400)
-            scans_base = getattr(settings, 'SHIMSY_SCANS_BASE', '/home/ecdysis/shimsy_scans')
+            scans_base = settings.SHIMSY_SCANS_BASE
             image_path_normalized = os.path.normpath(image_path)
             scans_base_normalized = os.path.normpath(scans_base)
             if not os.path.exists(image_path_normalized):

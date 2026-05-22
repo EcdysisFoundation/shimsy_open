@@ -6,12 +6,20 @@ NFS mount validation and sync operations
 """
 
 import os
+import sys
 import json
 import time
 import shutil
 import subprocess
 from pathlib import Path
 from datetime import datetime
+
+_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+_APP_ROOT = os.path.dirname(os.path.dirname(_SCRIPT_DIR))
+if _APP_ROOT not in sys.path:
+    sys.path.insert(0, _APP_ROOT)
+
+from shimsy_secrets import get_config
 
 
 class NASError(Exception):
@@ -21,12 +29,16 @@ class NASError(Exception):
 
 class NASManager:
     def __init__(self):
-        self.nas_ip = "192.168.2.212"
-        self.nas_export = "/pool1/srv/shimsy/shimsy_scans"
-        self.local_mount = "/home/ecdysis/shimsy_scans"
-        self.temp_base = "/home/ecdysis/shimsy_temp"
+        cfg = get_config()
+        repo = cfg.get("repo_home") or _APP_ROOT
+        scans = cfg.get("shimsy_scans_base") or os.path.join(repo, "shimsy_scans")
+        temp = cfg.get("shimsy_temp_base") or os.path.join(repo, "shimsy_temp")
+        self.nas_ip = cfg.get("nas_ip") or ""
+        self.nas_export = cfg.get("nas_export") or "/pool1/srv/shimsy/shimsy_scans"
+        self.local_mount = scans
+        self.temp_base = temp
         self.marker_file = ".nas_mounted_marker"
-        self.config_file = "/home/ecdysis/shimsy/controller/nas_config.json"
+        self.config_file = os.path.join(repo, "controller", "nas_config.json")
         os.makedirs(self.temp_base, exist_ok=True)
     def _run_command(self, cmd, check=True, timeout=30):
         """Run a shell command with timeout"""

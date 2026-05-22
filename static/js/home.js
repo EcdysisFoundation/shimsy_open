@@ -1710,7 +1710,8 @@ function displayFinalResults(successCount, failCount, results) {
 
   results.forEach(result => {
     if (result.status === 'success') {
-      const stitcherUrl = `http://10.147.19.124:3000/core/stitcher-form/${result.guid}`;
+      const formBase = (window.SHIMSY_CONFIG && window.SHIMSY_CONFIG.stitcherFormUrlBase) || '';
+      const stitcherUrl = formBase ? `${formBase}/${result.guid}` : '#';
       resultHtml += `
         <div style="color: #22c55e; font-size: 12px; margin: 5px 0;">
           SUCCESS: <a href="${stitcherUrl}" 

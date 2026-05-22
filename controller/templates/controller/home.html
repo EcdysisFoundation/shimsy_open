@@ -474,6 +474,11 @@
       </div>
     </div>
 
+    <script>
+      window.SHIMSY_CONFIG = {
+        stitcherFormUrlBase: "{{ shimsy_stitcher_form_url_base|escapejs }}"
+      };
+    </script>
     <script src="{% static "js/home.js" %}"></script>
   </body>
 </html>
