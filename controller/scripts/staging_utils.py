@@ -12,8 +12,11 @@ from datetime import datetime
 
 
 
-STAGING_ROOT = "/mnt/shimsy_tmp"
-FINAL_ROOT = "/home/ecdysis/shimsy_scans"
+FINAL_ROOT = os.environ.get("SHIMSY_SCANS_BASE", "/home/ecdysis/shimsy_scans")
+_STAGING_DEFAULT = "/mnt/shimsy_tmp"
+STAGING_ROOT = os.environ.get("SHIMSY_STAGING") or (
+    _STAGING_DEFAULT if os.path.exists(_STAGING_DEFAULT) else os.path.join(FINAL_ROOT, ".staging")
+)
 
 
 def ensure_staging_available():

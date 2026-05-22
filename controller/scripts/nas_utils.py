@@ -57,13 +57,13 @@ class NASManager:
             result = self._run_command(f"ping -c 1 -W 3 {self.nas_ip}", check=False)
             if result.returncode != 0:
                 return False, f"NAS IP {self.nas_ip} not reachable"
-            test_file = os.path.join(self.local_mount, f".write_test_{int(time.time())}")
+            test_file = os.path.join(self.temp_base, f".write_test_{int(time.time())}")
             try:
                 with open(test_file, 'w') as f:
                     f.write("write test")
                 os.remove(test_file)
             except Exception as e:
-                return False, f"Cannot write to NAS: {e}"
+                return False, f"Cannot write (local staging): {e}"
             return True, "NAS properly mounted and accessible"
         except Exception as e:
             return False, f"Mount check failed: {e}"

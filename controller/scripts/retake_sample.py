@@ -21,11 +21,15 @@ DIR_Z = DigitalOutputDevice(25)
 STEP_Z = DigitalOutputDevice(24)
 ENA = DigitalOutputDevice(5)
 
-# === Constants ===
+
+_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+_CONTROLLER_DIR = os.path.dirname(_SCRIPT_DIR)
+_APP_ROOT = os.path.dirname(_CONTROLLER_DIR)
+
 DELAY = 0.0005
-SCAN_CONFIG_PATH = "/home/ecdysis/shimsy/controller/scan_config.json"
-MANUAL_PATH = "/home/ecdysis/shimsy/manual_path.json"
-MEDIA_ROOT = "/home/ecdysis/shimsy_scans"
+SCAN_CONFIG_PATH = os.path.join(_CONTROLLER_DIR, "scan_config.json")
+MANUAL_PATH = os.path.join(_APP_ROOT, "manual_path.json")
+MEDIA_ROOT = os.environ.get("SHIMSY_SCANS_BASE", "/home/ecdysis/shimsy_scans")
 
 def move_axis(dir_pin, step_pin, steps, direction=True):
     dir_pin.value = direction
@@ -134,7 +138,7 @@ def main():
         return
 
     # Find the last run path from LAST_SCAN.txt
-    LAST_SCAN_PATH = "/home/ecdysis/shimsy_scans/LAST_SCAN.txt"
+    LAST_SCAN_PATH = os.path.join(MEDIA_ROOT, "LAST_SCAN.txt")
     try:
         with open(LAST_SCAN_PATH, "r") as f:
             run_path = ""

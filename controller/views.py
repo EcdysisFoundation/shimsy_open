@@ -1,5 +1,5 @@
 from .models import ScanSettings, ScanConfiguration, ScanRecord, UnstitchedRun, RescanRequest
-from .utils import convert_sample_type_abbrev_to_full
+from .utils import convert_sample_type_abbrev_to_full, dish_number_from_folder
 
 from django.shortcuts import render
 from django.http import JsonResponse
@@ -78,7 +78,11 @@ def home(request):
 
 active_process = None
 
-RETURN_HOME_SCRIPT = "/home/ecdysis/shimmsy/shimsy/controller/scripts/return_home.py"
+# Paths from project root (portable across Shimsy devices)
+CONTROLLER_DIR = str(settings.BASE_DIR / "controller")
+SCRIPTS_DIR = os.path.join(CONTROLLER_DIR, "scripts")
+APP_ROOT = str(settings.BASE_DIR)
+RETURN_HOME_SCRIPT = os.path.join(SCRIPTS_DIR, "return_home.py")
 
 @csrf_exempt
 def stop_scan(request):
@@ -95,7 +99,7 @@ def stop_scan(request):
 @csrf_exempt
 def return_home(request):
     try:
-        command = ['python3', '/home/ecdysis/shimmsy/shimsy/controller/scripts/return_home.py']
+        command = ['python3', RETURN_HOME_SCRIPT]
         proc = subprocess.run(command, capture_output=True, text=True)
         return JsonResponse({
             'status': 'success' if proc.returncode == 0 else 'error',
@@ -117,7 +121,7 @@ def run_full_scan(request):
 
             sample_map = {str(i + 1): s for i, s in enumerate(samples)}
 
-            scan_config_path = "/home/ecdysis/shimmsy/shimsy/controller/scan_config.json"
+            scan_config_path = os.path.join(CONTROLLER_DIR, "scan_config.json")
             sample_names_ordered = [
                 sample_map.get(str(i), f"UnknownSample{i}") if sample_map.get(str(i), "").strip() not in ["", "--"] else f"UnknownSample{i}"
                 for i in range(1, 7)
@@ -127,16 +131,16 @@ def run_full_scan(request):
                 json.dump({"samples": sample_names_ordered}, f, indent=4)
 
             template = payload.get("template", "default").lower()
-            template_flag_path = "/home/ecdysis/shimmsy/shimsy/controller/template_flag.json"
+            template_flag_path = os.path.join(CONTROLLER_DIR, "template_flag.json")
             with open(template_flag_path, "w") as f:
                 json.dump({"template": template}, f)
 
-            command = ['python3', '/home/ecdysis/shimmsy/shimsy/controller/scripts/run_scan.py']
+            command = ['python3', os.path.join(SCRIPTS_DIR, "run_scan.py")]
             active_process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
             stdout, stderr = active_process.communicate()
             success = active_process.returncode == 0
 
-            RUN_COUNTER_PATH = "/home/ecdysis/shimmsy/shimsy/controller/scan_run_counter.json"
+            RUN_COUNTER_PATH = os.path.join(CONTROLLER_DIR, "scan_run_counter.json")
             try:
                 with open(RUN_COUNTER_PATH) as f:
                     run_number = json.load(f).get("run", 1)
@@ -278,7 +282,10 @@ def unstitched_runs(request):
             run_path = run.run_path
             if os.path.exists(run_path):
                 all_folders = [f.name for f in os.scandir(run_path) if f.is_dir()]
-                remaining_folders = [folder for folder in all_folders if folder not in stitched_folders]
+                remaining_folders = sorted(
+                    [folder for folder in all_folders if folder not in stitched_folders],
+                    key=lambda f: (dish_number_from_folder(f), f),
+                )
                 run.remaining_folders = remaining_folders[:10]
             else:
                 run.remaining_folders = []
@@ -334,9 +341,9 @@ def retake_sample(request):
             if not sample:
                 return JsonResponse({"status": "error", "message": "Sample not provided"})
 
-            subprocess.Popen(["python3", "/home/ecdysis/shimmsy/shimsy/controller/scripts/retake_sample.py", str(sample)])
+            subprocess.Popen(["python3", os.path.join(SCRIPTS_DIR, "retake_sample.py"), str(sample)])
 
-            SCAN_CONFIG = "/home/ecdysis/shimmsy/shimsy/controller/scan_config.json"
+            SCAN_CONFIG = os.path.join(CONTROLLER_DIR, "scan_config.json")
             try:
                 with open(SCAN_CONFIG) as f:
                     cfg = json.load(f)
@@ -360,7 +367,7 @@ def retake_sample(request):
             if site:
                 site = site[:4]
 
-            RUN_COUNTER_PATH = "/home/ecdysis/shimmsy/shimsy/controller/scan_run_counter.json"
+            RUN_COUNTER_PATH = os.path.join(CONTROLLER_DIR, "scan_run_counter.json")
             try:
                 with open(RUN_COUNTER_PATH) as f:
                     run_number = json.load(f).get("run", 1)
@@ -1059,16 +1066,15 @@ def trigger_rescan_for_dish(request):
         sample_names_ordered = [f"UnknownSample{i}" for i in range(1, 7)]
         sample_names_ordered[dish_number - 1] = sample_name
         
-        scan_config_path = "/home/ecdysis/shimmsy/shimsy/controller/scan_config.json"
+        scan_config_path = os.path.join(CONTROLLER_DIR, "scan_config.json")
         with open(scan_config_path, "w") as f:
             json.dump({"samples": sample_names_ordered}, f, indent=4)
-        
-        
-        filtered_path_data = filter_capture_points_by_dish(dish_number)
-        
-        
-        custom_path_file = "/home/ecdysis/shimmsy/shimsy/custom_path.json"
-        custom_path_backup = "/home/ecdysis/shimmsy/shimsy/custom_path.json.backup"
+
+        manual_path_file = os.path.join(APP_ROOT, "manual_path.json")
+        filtered_path_data = filter_capture_points_by_dish(dish_number, manual_path_file=manual_path_file)
+
+        custom_path_file = os.path.join(APP_ROOT, "custom_path.json")
+        custom_path_backup = os.path.join(APP_ROOT, "custom_path.json.backup")
         
         if os.path.exists(custom_path_file):
             shutil.copy(custom_path_file, custom_path_backup)
@@ -1078,15 +1084,11 @@ def trigger_rescan_for_dish(request):
             json.dump(filtered_path_data, f, indent=2)
         
         
-        template_flag_path = "/home/ecdysis/shimmsy/shimsy/controller/template_flag.json"
+        template_flag_path = os.path.join(CONTROLLER_DIR, "template_flag.json")
         with open(template_flag_path, "w") as f:
             json.dump({"template": "custom"}, f)
-        
-        
-        command = [
-            'python3',
-            '/home/ecdysis/shimmsy/shimsy/controller/scripts/run_scan.py'
-        ]
+
+        command = ['python3', os.path.join(SCRIPTS_DIR, "run_scan.py")]
         
         process = subprocess.Popen(
             command,
@@ -1108,7 +1110,7 @@ def trigger_rescan_for_dish(request):
         
         if process.returncode == 0:
             
-            RUN_COUNTER_PATH = "/home/ecdysis/shimmsy/shimsy/controller/scan_run_counter.json"
+            RUN_COUNTER_PATH = os.path.join(CONTROLLER_DIR, "scan_run_counter.json")
             try:
                 with open(RUN_COUNTER_PATH) as f:
                     run_number = json.load(f).get("run", 1)

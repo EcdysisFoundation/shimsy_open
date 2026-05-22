@@ -1,5 +1,5 @@
-
 import json
+import os
 import time
 from gpiozero import DigitalOutputDevice
 
@@ -17,7 +17,9 @@ ENA    = DigitalOutputDevice(5)
 
 
 DELAY = 0.0005
-POSITION_FILE = "/home/ecdysis/shimmsy/shimsy/controller/last_position.json"
+_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+_CONTROLLER_DIR = os.path.dirname(_SCRIPT_DIR)
+POSITION_FILE = os.path.join(_CONTROLLER_DIR, "last_position.json")
 
 def save_position(x, y, z):
     with open(POSITION_FILE, "w") as f:

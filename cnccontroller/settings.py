@@ -10,9 +10,12 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+CONTROLLER_DIR = BASE_DIR / "controller"
 
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [
@@ -111,5 +114,5 @@ STITCHER_JS_URL_ZEROTIER = 'http://10.147.19.124:8090'
 STITCHER_JS_URL = 'http://ecdysis01.local:8090'
 ERROR_MSG_KEY = 'ERROR'
 
-# Shimsy Scans Dir
-SHIMSY_SCANS_BASE = '/home/ecdysis/shimsy_scans'
+# Shimsy Scans Dir (override with SHIMSY_SCANS_BASE env for test/second device)
+SHIMSY_SCANS_BASE = os.environ.get("SHIMSY_SCANS_BASE", "/home/ecdysis/shimsy_scans")

@@ -59,9 +59,15 @@ Thumbs.db
 
 # Logs and Temporary Files
 *.log
+# Named pipes created at runtime (e.g. log daemon IPC)
+controller/scripts/.lgd-*
+
 *.tmp
 *.bak
 *.cache
+
+test_shimsy_scans/
+test_shimsy_staging/
 
 # Static Files
 staticfiles/

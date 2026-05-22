@@ -12,17 +12,21 @@ from PIL import Image, ImageDraw, ImageFont
 import traceback
 import shutil
 
+_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+_CONTROLLER_DIR = os.path.dirname(_SCRIPT_DIR)
+_APP_ROOT = os.path.dirname(_CONTROLLER_DIR)
 
-POSITION_FILE = "/home/ecdysis/shimmsy/shimsy/controller/last_position.json"
+POSITION_FILE = os.path.join(_CONTROLLER_DIR, "last_position.json")
 delay = 0.0005
 
-CONFIG_PATH = "/home/ecdysis/shimmsy/shimsy/controller/scan_config.json"
+CONFIG_PATH = os.path.join(_CONTROLLER_DIR, "scan_config.json")
+RUN_COUNTER_PATH = os.path.join(_CONTROLLER_DIR, "scan_run_counter.json")
 
-RUN_COUNTER_PATH = "/home/ecdysis/shimmsy/shimsy/controller/scan_run_counter.json"
-
-
-STAGING_ROOT = "/mnt/shimsy_tmp"
-FINAL_ROOT   = "/home/ecdysis/shimsy_scans"
+FINAL_ROOT = os.environ.get("SHIMSY_SCANS_BASE", "/home/ecdysis/shimsy_scans")
+_STAGING_DEFAULT = "/mnt/shimsy_tmp"
+STAGING_ROOT = os.environ.get("SHIMSY_STAGING") or (
+    _STAGING_DEFAULT if os.path.exists(_STAGING_DEFAULT) else os.path.join(FINAL_ROOT, ".staging")
+)
 
 def get_next_run_paths():
     if not os.path.exists(RUN_COUNTER_PATH):
@@ -183,7 +187,7 @@ DIR_Z  = DigitalOutputDevice(25)
 ENA    = DigitalOutputDevice(5)
 
 
-TEMPLATE_FLAG_PATH = "/home/ecdysis/shimmsy/shimsy/controller/template_flag.json"
+TEMPLATE_FLAG_PATH = os.path.join(_CONTROLLER_DIR, "template_flag.json")
 try:
     with open(TEMPLATE_FLAG_PATH) as f:
         template_config = json.load(f)
@@ -192,9 +196,9 @@ except Exception:
     template = "default"
 
 if template == "custom":
-    MANUAL_PATH_JSON = "/home/ecdysis/shimmsy/shimsy/custom_path.json"
+    MANUAL_PATH_JSON = os.path.join(_APP_ROOT, "custom_path.json")
 else:
-    MANUAL_PATH_JSON = "/home/ecdysis/shimmsy/shimsy/manual_path.json"
+    MANUAL_PATH_JSON = os.path.join(_APP_ROOT, "manual_path.json")
 
 with open(MANUAL_PATH_JSON) as f:
     path_data = json.load(f)
@@ -371,7 +375,7 @@ try:
 
     print("[DEBUG] Starting first pass: Label capture for all samples")
     for idx, point in enumerate(capture_points):
-        if point["z"] != 8650:
+        if point["z"] != 4200:
             continue
         sample_num = int(point["sample"])
         if sample_num not in sample_folder_assignments:

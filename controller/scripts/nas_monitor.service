@@ -14,15 +14,12 @@ Restart=always
 RestartSec=30
 Environment=PYTHONPATH=/home/ecdysis/shimsy/controller/scripts
 
-# Logging
 StandardOutput=journal
 StandardError=journal
 SyslogIdentifier=shimsy-nas-monitor
 
-# Security
 NoNewPrivileges=true
 ProtectSystem=strict
-ProtectHome=true
 ReadWritePaths=/home/ecdysis/shimsy /home/ecdysis/shimsy_scans /home/ecdysis/shimsy_temp
 PrivateTmp=true
 
