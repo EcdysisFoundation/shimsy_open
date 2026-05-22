@@ -4,6 +4,8 @@ Django application for a Raspberry Pi–based sample scanner: web UI, CNC motion
 
 Licensed under the [MIT License](LICENSE).
 
+![Shimsy demo](docs/Shimsy_Demo.gif)
+
 ---
 
 ## Features
